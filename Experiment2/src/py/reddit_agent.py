@@ -24,9 +24,9 @@ from nltk.corpus import stopwords as nltk_stopwords
 
 
 
-class MachineLobe:
+class RedditAgent:
     """
-    The Machine Lobe, derivative of the Cerebrum.
+    The Reddit Agent for spreading awareness throughout Reddit comment sections about a given problem topic.
     """
 
     # TODO: Declare all Class fields here.
