@@ -35,4 +35,4 @@ def main(submission_id):
 
 
 # Run 'main'.
-if __name__ == '__main__': main("8gm3un")
+main("8gm3un")

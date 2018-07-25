@@ -18,7 +18,7 @@ class DialogFlowAgent:
             self,
             reddit_parameters: tuple,
             submission: str,
-            gcp_project_id: str = "reddit_ai",
+            gcp_project_id: str = "cs-196",
             gcp_session_id: str = "dialogflow_reddit_moderation_agent",
             gcp_language_code: str = "en",
     ):
@@ -26,8 +26,8 @@ class DialogFlowAgent:
 
         :param reddit_parameters:
         :param submission:
-        :param gcp_project_id:
-        :param gcp_session_id:
+        :param gcp_project_id: Must be static! The Project ID, respective to the project on the GCP.
+        :param gcp_session_id: Can be modified. This field provides a description for the current session.
         :param gcp_language_code:
         """
 
@@ -48,32 +48,40 @@ class DialogFlowAgent:
         # Define Google Cloud Platform (GCP) Parameters.
         self.gcp_project_id = gcp_project_id
 
+        # Session ID.
         self.gcp_session_id = gcp_session_id
 
+        # Language code.
         self.gcp_language_code = gcp_language_code
 
+        # Session client.
         self.gcp_session_client = dialogflow.SessionsClient()
 
+        # GCP Session.
         self.gcp_session = self.gcp_session_client.session_path(self.gcp_project_id, self.gcp_session_id)
 
 
 
     def define_gcp_parameters(self):
         """
-        Redefines the GCP parameters.
+        Redefines the GCP parameters (necessary due to an error caused by the GCP remote).
 
         :return:
         """
 
-        # Define Google Cloud Platform (GCP) Parameters.
-        self.gcp_project_id = self.gcp_project_id
+        # # Define Google Cloud Platform (GCP) Parameters.
+        # self.gcp_project_id = self.gcp_project_id
+        #
+        # # Session ID.
+        # self.gcp_session_id = self.gcp_session_id
+        #
+        # # Language code.
+        # self.gcp_language_code = self.gcp_language_code
 
-        self.gcp_session_id = self.gcp_session_id
-
-        self.gcp_language_code = self.gcp_language_code
-
+        # Session client.
         self.gcp_session_client = dialogflow.SessionsClient()
 
+        # GCP Session.
         self.gcp_session = self.gcp_session_client.session_path(self.gcp_project_id, self.gcp_session_id)
 
 
@@ -274,18 +282,34 @@ class DialogFlowAgent:
 
                     continue
 
+                # Catch a KeyboardInterrupt; this is likely to be the most common way to end the process.
+                except KeyboardInterrupt:
+
+                    # Output status.
+                    print("Finished loop: ", mainloop_iterations)
+                    print("Encountered keyboard interrupt; terminating process.")
+
+                    # End process.
+                    return self
+
+
+            # After end of loop, check if the time since the beginning of the process surpasses the given limit.
             if time.time() > timeout:
 
+                # Output status.
                 print(
                     "\n",
                     "Reached time-limit; completed process.",
                     "\n"
                 )
 
+                # End the process.
                 break
 
+            # Continue the process; stall for 5 minutes then fetch for new comments.
             else:
 
+                # Output status.
                 print(
                     "Finished loop: ",
                     mainloop_iterations,
@@ -306,7 +330,6 @@ class DialogFlowAgent:
                 time.sleep(300)
 
 
-
         return self
 
 
@@ -317,16 +340,20 @@ class DialogFlowAgent:
         :return:
         """
 
+        # Define the text input container for DialogFlow.
         text_input = dialogflow.types.TextInput(
             text= text_body,
             language_code=self.gcp_language_code
         )
 
+        # Define the DialogFlow text input query.
         query_input = dialogflow.types.QueryInput(text=text_input)
 
+        # Define a reference to the DialogFlow-generated response.
         response = self.gcp_session_client.detect_intent(
             session=self.gcp_session,
             query_input=query_input
         )
 
+        # Return the response.
         return response.query_result.fulfillment_text
