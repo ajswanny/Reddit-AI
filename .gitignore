@@ -106,5 +106,5 @@ venv.bak/
 .mypy_cache/
 
 # Custom
-.idea
+.idea/
 Experiment3/src/auth

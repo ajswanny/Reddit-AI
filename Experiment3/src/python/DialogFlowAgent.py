@@ -11,21 +11,6 @@ import time
 import google
 
 
-"""
-
-Parameters: 
-
-    - Submission
-    - Running-Time
-    - Reddit Account
-    - GCP Project ID
-    - GCP Session ID
-    - GCP Language Code
-    - Topic ( For future )
-
-"""
-
-
 class DialogFlowAgent:
 
 
@@ -33,10 +18,18 @@ class DialogFlowAgent:
             self,
             reddit_parameters: tuple,
             submission: str,
-            gcp_project_id: str = "cs-196",
+            gcp_project_id: str = "reddit_ai",
             gcp_session_id: str = "dialogflow_reddit_moderation_agent",
             gcp_language_code: str = "en",
     ):
+        """
+
+        :param reddit_parameters:
+        :param submission:
+        :param gcp_project_id:
+        :param gcp_session_id:
+        :param gcp_language_code:
+        """
 
         # Define the Reddit instance with the specified parameters.
         self.reddit_instance = praw.Reddit(
@@ -84,7 +77,6 @@ class DialogFlowAgent:
         self.gcp_session = self.gcp_session_client.session_path(self.gcp_project_id, self.gcp_session_id)
 
 
-
     def print_subm_comments(self):
         """
 
@@ -95,20 +87,12 @@ class DialogFlowAgent:
         self.submission.comments.replace_more(limit= 0)
         submission_comments = self.submission.comments.list()
 
-
+        # Output every comment to console.
         for comment in submission_comments:
 
-            print(
-                comment.body,
-                "\n",
-                '=' * 30,
-                "\n"
-            )
-
-
+            print(comment.body, "\n", '=' * 30, "\n")
 
         return self
-
 
 
     def run_main_process(
