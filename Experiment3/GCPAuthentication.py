@@ -1,3 +1,7 @@
+"""
+A Python script that enables authentication for use of Google Cloud Platform products.
+"""
+
 import os
 
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/Users/admin/anaconda2/envs/webscrape/cs196-0a61cfec0d3d.json"
@@ -13,5 +17,3 @@ def implicit():
     # Make an authenticated API request
     buckets = list(storage_client.list_buckets())
     print(buckets)
-
-

@@ -1,10 +1,8 @@
-import gcp_authentication
+from Experiment3 import gcp_authentication
 import dialogflow
 import praw
 import time
 import google
-
-
 
 
 """
@@ -22,7 +20,7 @@ Parameters:
 """
 
 
-class DF_Agent:
+class DialogFlowAgent:
 
 
     def __init__(
