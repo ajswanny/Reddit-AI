@@ -1,12 +1,16 @@
 """
-Agent: Cerebrum::MachineLobe
+Created by Alexander Swanson on 6/25/18.
 Copyright (c) 2018, Alexander Joseph Swanson Villares
+alexjosephswanson@gmail.com
+
+The script for initialization and operation of a Reddit AI agent.
 """
 
 
-from Cerebrum.input_lobe.input_lobe_h import InputLobe
-from Cerebrum.output_lobe.output_lobe_h import OutputLobe
+# Import custom modules.
+from .reddit_op_handler import RedditOpHandler
 
+# Import third-party modules.
 import _pickle as pickle
 import indicoio
 import json
@@ -23,7 +27,6 @@ from indicoio.utils import errors as indicoio_errors
 from nltk.corpus import stopwords as nltk_stopwords
 
 
-
 class RedditAgent:
     """
     The Reddit Agent for spreading awareness throughout Reddit comment sections about a given problem topic.
@@ -33,7 +36,6 @@ class RedditAgent:
 
     # Declare global boolean operation controllers.
     engage = False                          # Indicates if the Agent is to engage in utterance with Submissions.
-    start_menu_run = False                  # Indicates if the start menu is running.
     analyze_subm_articles = False           # Indicates whether the algorithm should consider a Submission's linked
                                             #   article for keyword analysis.
     analyze_subm_titles = False             # Indicates if the algorithm is to consider a Submission's title for keyword
@@ -46,10 +48,10 @@ class RedditAgent:
     topic_keywords_bag_path = str()
 
     # The collection of ptopic keywords and their measured relevance to the document.
-    _placer_ptopic_kwds_rated = pandas.Series()
+    ptopic_key_phrases = pandas.Series()
 
     # The collection of ptopic keywords.
-    ptopic_kwds_bag = tuple()
+    ptopic_kpr_bag = tuple()
 
     # The tuple containing English stop words.
     stop_words = tuple(nltk_stopwords.words("english"))
@@ -73,14 +75,14 @@ class RedditAgent:
 
 
     # The tuple of sentences to be used for expression utterance.
-    utterance_sentences = tuple(open("Resources/Utterances/utterance_sentences_(manual).txt").read().splitlines())
+    utterance_sentences = tuple(open("../resources/utterances/utterance_sentences_one.txt").read().splitlines())
 
 
     # The authentication for the Indico NLP API.
     indicoio.config.api_key = '43c624474f147b8b777a144807e7ca95'
 
 
-    def __init__(self, platform: str, reddit_params: tuple, main_df_archive_filepath: str, analyize_subm_links: bool,
+    def __init__(self, reddit_params: tuple, main_df_archive_filepath: str, analyize_subm_links: bool,
                  task: str = "Keyword Analysis and Expression"):
         """
 
@@ -95,10 +97,6 @@ class RedditAgent:
 
         # Define the Agent's purpose.
         self.purpose = task
-
-
-        # The current platform (i.e., Reddit, Facebook, etc.).
-        self.working_platform = platform
 
 
         # The PRAW Reddit object.
@@ -140,30 +138,29 @@ class RedditAgent:
 
     def __init_kwd_process_metadata__(self):
         """
-        Init method to initialize all necessary keyword-relative data fields.
+        Initializes all necessary keyword-relative data fields.
         :return:
         """
 
-        # TODO: Define the keywords collection.
-        # A temporary definition of the collection of the topic keywords.
-        # NOTE: CURRENTLY USING ONLY THE FIRST COLLECTION OF PROBLEM TOPIC KEYWORDS; STILL COMPILING FULL COLLECTION.
-        with open("Resources/ProblemTopicKeywords/v1/topic_keywords.json", 'r') as fp:
+        # Define the collection of key-phrases and their salience.
+        # TODO: CURRENTLY USING ONLY THE FIRST COLLECTION OF PROBLEM TOPIC KEYWORDS; STILL COMPILING FULL COLLECTION.
+        # TODO: REMOVE ABSOLUTE PATHING.
+        with open("../resources/problem_topics/__pr_h_c__/problem_topic_kwds/problem_topic_kwds.json", 'r') as fp:
 
-            self._placer_ptopic_kwds_rated = pandas.Series(json.load(fp))
+            self.ptopic_key_phrases = pandas.Series(json.load(fp))
 
 
-        # Define the bag of words for the problem topic keyword data.
-        self.ptopic_kwds_bag = tuple(self._placer_ptopic_kwds_rated.index.values)
+        # Define the bag of key-phrases for the problem topic.
+        self.ptopic_kpr_bag = tuple(self.ptopic_key_phrases.index.values)
 
-        # Normalize 'ptopic_kwds_bag', converting all keywords to lowercase strings.
-        self.ptopic_kwds_bag = list(map(lambda x: x.lower(), self.ptopic_kwds_bag))
+        # Normalize 'ptopic_kpr_bag', converting all key-phrases to lowercase strings.
+        self.ptopic_kpr_bag = list(map(lambda x: x.lower(), self.ptopic_kpr_bag))
 
         # Remove stop words.
-        self.ptopic_kwds_bag = self.remove_stopwords(self.ptopic_kwds_bag)
+        self.ptopic_kpr_bag = self.remove_stopwords(self.ptopic_kpr_bag)
 
 
-        # TODO: Define metadata.
-        # TODO: Implement inclusion of AURL KWD analysis within the 'success_probability' measure.
+        # TODO: OPTIMIZE NAMING AND DATAFRAME.
         # Declare the main operation DataFrame.
         self._main_kwd_df = pandas.DataFrame(
             columns= [
@@ -181,14 +178,13 @@ class RedditAgent:
 
     def remove_stopwords(self, corpus: (list, tuple)):
         """
-        Returns the given corpus restricted of English stopwords.
+        Returns the given corpus stripped of English stopwords.
 
         :param corpus:
         :return:
         """
 
         return [word for word in corpus if word not in self.stop_words]
-
 
 
     # noinspection PyCompatibility
@@ -209,35 +205,6 @@ class RedditAgent:
 
 
         return 0
-
-
-
-    @staticmethod
-    def __new_InputLobe__(reddit_instance: praw.Reddit, subreddit: str):
-        """
-        A method allowing for customizable creation of InputLobe objects.
-
-        :param reddit_instance:
-        :param subreddit:
-        :return:
-        """
-
-        return InputLobe(reddit_instance= reddit_instance, subreddit= subreddit)
-
-
-
-    @staticmethod
-    def __new_OutputLobe__(reddit_instance: praw.Reddit, subreddit: str):
-        """
-        A method allowing for customizable creation of OutputLobe objects.
-
-        :param reddit_instance:
-        :param subreddit:
-        :return:
-        """
-
-        return OutputLobe(reddit_instance= reddit_instance, subreddit= subreddit)
-
 
 
     @staticmethod
@@ -288,66 +255,26 @@ class RedditAgent:
               subm_fetch_limit: (int, None), analyze_subm_articles: bool, override: bool= False,
               analyze_subm_titles: bool= True, analyze_subm_relevance: bool = False):
         """
-        Begins the process of Work.
-
-        Workflow for KeywordWork algorithm:
-            1.  __init_keyword_workflow__
-            2.  __setup_process__
-                3.  __standard_process__
-                    4.  __process_subm_analysis__
-
-                3.  __stream_process__
-                    ...
 
 
         :return:
         """
 
         # Define all necessary fields.
-        self.set__start__values(engage, intersection_min_divider, subm_fetch_limit, analyze_subm_articles,
-                                analyze_subm_titles, analyze_subm_relevance)
+        self.set__start__values(
+            engage,
+            intersection_min_divider,
+            subm_fetch_limit,
+            analyze_subm_articles,
+            analyze_subm_titles,
+            analyze_subm_relevance
+        )
 
 
-        # Quick formal process override.
-        if override:
-
-            self.__init_keyword_workflow__(work_subreddit= work_subreddit)
-
-            return self
+        self.__init_keyword_workflow__(work_subreddit=work_subreddit)
 
 
-        # Output status.
-        print("\n", "-" * 100, '\n',
-              "The Machine Lobe has been instantiated and initialized.", '\n\n',
-              "\t[1] Begin KeywordWork process. \t\t [2] Exit.", '\n',
-              )
-
-
-        while self.start_menu_run:
-
-            # Prompt for desired operation.
-            action_choice = input("Option: ")
-
-            if action_choice is 1:
-
-                # Initialize keyword analysis workflow.
-                self.__init_keyword_workflow__(work_subreddit= work_subreddit)
-
-                break
-
-            if action_choice is 2:
-
-                # Future implementation.
-                pass
-
-            else:
-
-                # Exit program.
-                self.start_menu_run = False
-                break
-
-
-        return 0
+        return self
 
 
 
@@ -365,10 +292,6 @@ class RedditAgent:
             self.engage = True
 
 
-        # Define True condition for start menu run-state.
-        self.start_menu_run = True
-
-
         # Define specified intersection minimum determination divider.
         self.intersection_min_divider = intersection_min_divider
 
@@ -381,7 +304,7 @@ class RedditAgent:
         self.analyze_subm_titles = analyze_subm_titles
 
 
-        # Define the boolean controller for analysis of Submission article links.
+        # Define the boolean controller for analysis of Submission articles.
         self.analyze_subm_articles = analyze_subm_articles
 
 
@@ -399,7 +322,6 @@ class RedditAgent:
         :return:
         """
 
-        self.start_menu_run = False
         self.__setup_process__(method="standard", work_subreddit= work_subreddit)
 
 
@@ -456,7 +378,7 @@ class RedditAgent:
         self.avg_subm_title_size = self.__calc_avg_subm_title_size__(collection= self.submission_objects)
 
 
-        # Perform keyword-based success probability analysis, yielding a DataFrame with metadata respective analyses.
+        # Perform keyword-based success calc_response_probability analysis, yielding a DataFrame with metadata respective analyses.
         self.__process_subm_analysis__()
 
 
@@ -464,7 +386,8 @@ class RedditAgent:
 
             if self.engage:
 
-                # Perform engagement, determining for every Submission if it should be engaged and following through if so.
+                # Perform engagement, determining for every Submission if it should be engaged and following through
+                # if so.
                 self.__process_submission_engages__()
 
 
@@ -505,7 +428,7 @@ class RedditAgent:
             :return:
             """
 
-            self._output_lobe.submit_submission_expression(actionable_submission= x[0], utterance_content= x[1])
+            self._output_lobe.submit_submission_expression(actionable_submission=x[0], utterance_content=x[1])
 
 
         for index, row in self._main_kwd_df.iterrows():
@@ -513,7 +436,7 @@ class RedditAgent:
             if self.__clearance__(self._main_kwd_df.loc[index]):
 
                 # Generate the utterance message.
-                utterance_message = self.__generate_utterance__(submission_data= self._main_kwd_df.loc[index])
+                utterance_message = self.__generate_utterance__(submission_data=self._main_kwd_df.loc[index])
 
 
                 # Define container of data for operation of Submission engage.
@@ -628,7 +551,7 @@ class RedditAgent:
 
     def __process_subm_analysis__(self):
         """
-        A mid-level management method for measurement of Submission engagement success probability.
+        A mid-level management method for measurement of Submission engagement success calc_response_probability.
         The purpose of this method is to allow for the monitoring of the keyword-based
         analysis loop and provide accessibility to intervention for optimization or
         modification.
@@ -760,7 +683,7 @@ class RedditAgent:
 
 
         # Define the intersection of the ptopic keywords and the AURL.
-        subm_aurl_intxn = self.intersect(self.ptopic_kwds_bag, subm_aurl_kwds)
+        subm_aurl_intxn = self.intersect(self.ptopic_kpr_bag, subm_aurl_kwds)
 
 
         # Initialize the keyword intersection count.
@@ -811,7 +734,7 @@ class RedditAgent:
         # Define the intersection of the topic keywords bag and the Submission's title content.
         # FIXME Currently using the entire set of words from Submission titles -- this is naturally what we as people do
         # FIXME when reading documents to identify relevance to a certain topic.
-        title_intxn = self.intersect(self.ptopic_kwds_bag, subm_title_tokens)
+        title_intxn = self.intersect(self.ptopic_kpr_bag, subm_title_tokens)
 
 
         # Initialize the keyword intersection count.
@@ -828,11 +751,11 @@ class RedditAgent:
         }
 
 
-        # Define a probability measure of success and append this to the 'analysis' dictionary.
+        # Define a calc_response_probability measure of success and append this to the 'analysis' dictionary.
         # This figure is used to determine whether or not the Agent will submit a textual expression
         # to a Reddit Submission.
         # TODO: This measure is to be optimized in the future.
-        analysis["success_probability"] = self.probability(method= "keyword", values= tuple(analysis.values()))
+        analysis["success_probability"] = self.calc_response_probability(method="keyword", values= tuple(analysis.values()))
 
 
 
@@ -850,19 +773,19 @@ class RedditAgent:
 
     def __get_reddit_submission__(self, submission_id: str):
         """
-        Returns a Reddit Submisssion object using a Submission unique ID.
+        Returns a Reddit Submission object using a Submission unique ID.
 
         :param submission_id:
         :return:
         """
 
-        return self.reddit_instance.submission(id= submission_id)
+        return self.reddit_instance.submission(id=submission_id)
 
 
 
-    def probability(self, method: str, values: tuple, normalize: bool= True):
+    def calc_response_probability(self, method: str, values: tuple, normalize: bool= True):
         """
-        Calculates the probability of success, judging this measure with respect to the intersection
+        Calculates the calc_response_probability of success, judging this measure with respect to the intersection
         of keywords of the base keyword set and a given Submission title's keywords.
 
         At the moment, this measure is obtained simply and naively from the length of the intersection
@@ -875,16 +798,16 @@ class RedditAgent:
 
         if method == "keyword":
 
-            # Initialize a probability measure; this tuple index refers to the sum of the amount of values
+            # Initialize a calc_response_probability measure; this tuple index refers to the sum of the amount of values
             # in the intersection list. That is, the amount of keywords that intersected.
             success_probability = values[3]
 
 
             if normalize:
 
-                # Return a probability measure normalized to a range of [0, 1].
+                # Return a calc_response_probability measure normalized to a range of [0, 1].
                 # The determined max value is obtained from the amount of ptopic keywords.
-                return self.normalize(success_probability, minimum= 0, maximum= 79)
+                return self.normalize(success_probability, minimum=0, maximum=79)
 
             else:
 

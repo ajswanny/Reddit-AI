@@ -1,5 +1,7 @@
 """
+Created by Alexander Swanson on 6/25/18.
 Copyright (c) 2018, Alexander Joseph Swanson Villares
+alexjosephswanson@gmail.com
 
 A script that allows for the collection of Reddit Submissions within a default Subreddit's (if one is not specified)
 "Hot" Submissions.
@@ -12,7 +14,7 @@ from pprint import pprint
 
 # TODO: Implement data input.
 
-class InputLobe:
+class RedditOpHandler:
     """
     The Input Lobe, derivative of the Cerebrum.
 

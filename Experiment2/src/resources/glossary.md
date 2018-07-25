@@ -16,6 +16,7 @@
 
 - PTOPIC:   Problem Topic
 - KWD(S):   Keyword(s)
+- KPR(s):   Key-phrase(s)
 - SUBM:     Submission (Usually in reference to Reddit Submissions)
 - NLP:      Natural Language Processing
 - API:      Application Programming Interface

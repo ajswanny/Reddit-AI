@@ -1,4 +1,12 @@
+"""
+Created by Alexander Swanson on 6/25/18.
+Copyright (c) 2018, Alexander Joseph Swanson Villares
+alexjosephswanson@gmail.com
+"""
+
+
 from Experiment2.src.py.reddit_agent import RedditAgent
+
 from pprint import pprint
 import pandas
 import json
@@ -16,7 +24,6 @@ def process():
 
     # Define the MachineLobe with the desired Reddit credentials.
     machine = RedditAgent(
-        platform="Reddit",
         reddit_params=reddit_parameters,
         analyize_subm_links=False,
         main_df_archive_filepath="Resources/_main_kwd_df/_r-politics_/Title_Kwd_Anlysis/2018-02-21_10-09/v2/_main_kwd_df.json"
