@@ -1,4 +1,10 @@
-from Experiment3 import gcp_authentication
+"""
+Created by Alexander Swanson on 6/25/18.
+Copyright (c) 2018, Alexander Joseph Swanson Villares
+alexjosephswanson@gmail.com
+"""
+
+from Experiment3.src.auth import GCPAuthentication
 import dialogflow
 import praw
 import time
