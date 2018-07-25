@@ -5,7 +5,7 @@ alexjosephswanson@gmail.com
 """
 
 
-from Experiment3.src.python.DialogFlowAgent import DialogFlowAgent
+from Experiment3.src.python.dialog_flow_agent import DialogFlowAgent
 
 
 def main(submission_id):
@@ -35,4 +35,5 @@ def main(submission_id):
 
 
 # Run 'main'.
-main("8gm3un")
+if __name__ == "__main__":
+    main("8gm3un")

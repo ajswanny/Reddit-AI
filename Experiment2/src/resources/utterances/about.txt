@@ -1,0 +1,1 @@
+This resources: the collection of utterances the Reddit AI bot uses when commenting on Reddit Submissions.
