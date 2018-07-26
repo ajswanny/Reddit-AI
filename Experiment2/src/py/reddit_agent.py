@@ -17,7 +17,7 @@ import json
 import pandas
 from pprint import pprint
 import praw
-import praw.exceptions
+import praw.exceptions as praw_exceptions
 import praw.models as reddit
 import random
 import time
@@ -461,8 +461,17 @@ class RedditAgent:
         :return:
         """
 
-        # Define alias to linked URL of the provided Submission.
-        subm_url = submission.url
+        try:
+            
+            # Define alias to linked URL of the provided Submission.
+            subm_url = submission.url
+            
+        except praw_exceptions.APIException:
+            
+            # Output status.
+            print("Encountered PRAW API exception at '__analyze_subma_kprs__. Terminating collection of SUBMA data.")
+            
+            return None
 
 
         # Generate keyword analysis for the AURL.
