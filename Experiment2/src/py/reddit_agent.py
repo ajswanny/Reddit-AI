@@ -83,7 +83,7 @@ class RedditAgent:
     indicoio.config.api_key = '43c624474f147b8b777a144807e7ca95'
 
 
-    def __init__(self, reddit_params: tuple, main_df_archive_filepath: str, analyize_subm_links: bool,
+    def __init__(self, reddit_params: tuple, problem_topic_id: str, data_archive_fp = None,
                  task: str = "Keyword Analysis and Expression"):
         """
 
@@ -99,20 +99,26 @@ class RedditAgent:
         # Define the Agent's purpose.
         self.purpose = task
 
-
         # The PRAW Reddit object.
         self.reddit_instance = praw.Reddit(
-            client_id= reddit_params[0],
-            client_secret= reddit_params[1],
-            user_agent= reddit_params[2],
-            username= reddit_params[3],
-            password= reddit_params[4]
+            client_id=reddit_params[0],
+            client_secret=reddit_params[1],
+            user_agent=reddit_params[2],
+            username=reddit_params[3],
+            password=reddit_params[4]
         )
 
+        # Define the problem topic ID.
+        self.problem_topic_id = problem_topic_id
 
         # Define location of the JSON file to archive 'data'.
-        self.FILEPATH_main_kwd_df = main_df_archive_filepath
+        if data_archive_fp is None:
 
+            self.data_archive_fp = str
+
+        else:
+
+            self.data_archive_fp = data_archive_fp
 
         # Initialize dependencies for keyword analysis.
         self.__init_kpr_metadata__()
@@ -146,12 +152,11 @@ class RedditAgent:
         # TODO: OPTIMIZE NAMING AND DATAFRAME.
         # Declare the main operation DataFrame.
         self.data = pandas.DataFrame(
-            columns= [
-                'subm_title_keywords', 'intersection_size', 'keywords_intersection',
-                'aurl_kwd_intxn', 'aurl_kwd_intxn_size', 'subm_aurl_kwds',
-                'submission_id', 'submission_object', 'submission_title',
-                'success_probability', 'utterance_content', 'engagement_time',
-                "comment_count", "subm_relevance_score"
+            columns=[
+                'subm_id', 'subm_object', 'subm_title',
+                'subm_title_kprs', 'intxn_size', 'kprs_intxn',
+                'subma_kpr_intxn', 'subma_kpr_intxn_size', 'subma_kprs',
+                'success_probability', 'utterance_content', 'engagement_time', "comment_count", "subm_relevance_score"
             ]
         )
 
@@ -171,20 +176,23 @@ class RedditAgent:
 
 
     # noinspection PyCompatibility
-    def archive_main_dataframe(self):
+    def __archive_data__(self):
         """
-        Currently archives field: 'data'. Future development will see this method allow for the archival of
-        any specified Class data field.
-
-        # TODO: Update to allow for archival of any specified DataFrame.
+        Currently archives field: 'data'.
 
         :return:
         """
 
-        # Archive 'data'.
-        x: pandas.DataFrame = self.data.drop("submission_object", 1)
+        # Remove elements from 'data' that cannot be serialized.
+        t: pandas.DataFrame = self.data.drop("submission_object", 1)
 
-        x.to_json(path_or_buf = self.FILEPATH_main_kwd_df)
+
+        # Generate the archive FP.
+        self.data_archive_fp = \
+            "../resources/dataframes/" + str(self.problem_topic_id) + "/data/" + self.op_datetime_stamp + ".json"
+
+
+        t.to_json(path_or_buf = self.data_archive_fp)
 
 
         return 0
@@ -297,6 +305,10 @@ class RedditAgent:
 
         if method == "batch":
 
+            # Define the date-time stamp for the operation.
+            self.op_datetime_stamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+
+            # Begin the batch process.
             self.__batch_process__()
 
         elif method == "stream":
@@ -352,7 +364,7 @@ class RedditAgent:
         finally:
 
             # Archive 'data'.
-            self.archive_main_dataframe()
+            self.__archive_data__()
 
 
         return 0
@@ -391,7 +403,7 @@ class RedditAgent:
                 if self.analyze_subm_titles:
 
                     # Perform Submission title key-phrase analysis.
-                    analysis.update(self.__analyze_subm_title_kwds__(submission))
+                    analysis.update(self.__analyze_subm_title_kprs__(submission))
 
                 if self.analyze_subm_articles:
 
@@ -401,7 +413,7 @@ class RedditAgent:
                 if self.analyze_subm_relevance:
 
                     # Perform relevance measurement.
-                    analysis["subm_relevance_score"] = self.__analyze_subm_relevance__(submission)
+                    analysis["relevance_score"] = self.__analyze_subm_relevance__(submission)
 
             except IndicoError:
 
@@ -423,7 +435,7 @@ class RedditAgent:
         self.data = pandas.concat([self.data, kpr_analyses])
 
 
-        return 0
+        return self
 
 
     def __analyze_subm_relevance__(self, submission: reddit.Submission):
@@ -461,17 +473,9 @@ class RedditAgent:
         :return:
         """
 
-        try:
-            
-            # Define alias to linked URL of the provided Submission.
-            subm_url = submission.url
-            
-        except praw_exceptions.APIException:
-            
-            # Output status.
-            print("Encountered PRAW API exception at '__analyze_subma_kprs__. Terminating collection of SUBMA data.")
-            
-            return None
+
+        # Define alias to linked URL of the provided Submission.
+        subm_url = submission.url
 
 
         # Generate keyword analysis for the AURL.
@@ -507,7 +511,7 @@ class RedditAgent:
 
 
     # noinspection PyDictCreation
-    def __analyze_subm_title_kwds__(self, submission: reddit.Submission, return_subm_obj: bool = True):
+    def __analyze_subm_title_kprs__(self, submission: reddit.Submission, return_subm_obj: bool = True):
         """
         'Analyze Submission Keywords'
 
@@ -544,8 +548,8 @@ class RedditAgent:
 
         # Define a structure to contain all measures relevant to analysis.
         analysis = {
-            "submission_id": submission.id,
-            "submission_title": submission.title,
+            "subm_id": submission.id,
+            "title": submission.title,
             "title_intxn": title_intxn,
             "title_intxn_size": float(keywords_intersections_count),
             "title_kwds": subm_title_keywords
@@ -565,7 +569,7 @@ class RedditAgent:
             # Append Submission object to the analysis.
             # NOTE: Attempting to serialize the main DataFrame with this field as a member will cause an
             # overflow error.
-            analysis["submission_object"] = submission
+            analysis["subm_object"] = submission
 
 
         return analysis

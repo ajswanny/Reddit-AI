@@ -1,14 +1,4 @@
 reddit_parameters_1 = (
-        "YKsn6_Q_yaP46A",
-         "eygwAD8rMNEhFet0vLQmBqVPxbE",
-         "default_for_research",
-         "agent000001",
-         "S0awesome"
-         email: "alexander.swanson.1@uvm.edu"
-    )
-
-
-reddit_parameters_2 = (
         "zO1z52xZNtdxrA",
          "VbAzyOfUcj-94a71j8V_6lUTyAM",
          "An observer of Subreddit Streams",
@@ -19,7 +9,7 @@ reddit_parameters_2 = (
     )
 
 
-reddit_parameters_3 = (
+reddit_parameters_2 = (
         "B2ftBocL0DSYKQ",
          "bD_wgy8GWlQJ6koXUwqP0IjzZao",
          "An observer of Subreddit Streams",

@@ -16,17 +16,18 @@ import indicoio
 def process():
 
     # Define the credentials for the Reddit object.
-    reddit_parameters = ("YKsn6_Q_yaP46A",
-                         "eygwAD8rMNEhFet0vLQmBqVPxbE",
-                         "default_for_research",
-                         "agent000001",
-                         "S0awesome")
+    reddit_parameters = (
+        "zO1z52xZNtdxrA",
+         "VbAzyOfUcj-94a71j8V_6lUTyAM",
+         "An observer of Subreddit Streams",
+         "ssa1G",
+         "subreddit.stream.agent.1.password"
+    )
 
     # Define the MachineLobe with the desired Reddit credentials.
     machine = RedditAgent(
         reddit_params=reddit_parameters,
-        analyize_subm_links=False,
-        main_df_archive_filepath="Resources/data/_r-politics_/Title_Kwd_Anlysis/2018-02-21_10-09/v2/data.json"
+        problem_topic_id="__pr_h_c__"
     )
 
     # Initialize the process.
@@ -44,34 +45,17 @@ def process():
 def get_datetime():
     from datetime import datetime
 
-    x = str(datetime.now())
+    x = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
     print(x)
 
 
 def main():
-    # with open("Resources/data/_r-worldnews_/2018-02-18_00-40/data.json", "r") as fp:
-    #
-    #     x = json.load(fp)
-
-    # r news 1:
-    #   Resources/data/_r-news_/2018-02-17_20-54/data.json
-
-    # r worldnews 1:
-    #   Resources/data/_r-worldnews_/2018-02-18_00-40/data.json
 
     x: pandas.DataFrame = pandas.read_json(
-        path_or_buf="Resources/data/_r-politics_/Title_Kwd_Anlysis/2018-02-21_10-09/v2/data.json")
+        path_or_buf="../resources/dataframes/__pr_h_c__/data/2018-07-26_15-43-07.json")
 
-    y = x.iloc[0]
-
-    print(y.subm_relevance_score)
-
-    # print((x.loc[x.intersection_size > 1]).to_string())
-
-    # print((x.loc[x.aurl_kwd_intxn_size > 1]).to_string())
-
-    print(x.head().to_string())
+    print(x.to_string())
 
 
 def f(x):
@@ -86,4 +70,4 @@ def f(x):
         get_datetime()
 
 
-f(1)
+f(2)
