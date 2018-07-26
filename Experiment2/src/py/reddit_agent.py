@@ -41,7 +41,7 @@ class RedditAgent:
                                             #   article for keyword analysis.
     analyze_subm_titles = False             # Indicates if the algorithm is to consider a Submission's title for keyword
                                             #   analysis.
-    analyze_subm_relevance = False          # The boolean controller for analysis of Submission relevance.
+    analyze_subma_relevance = False          # The boolean controller for analysis of Submission relevance.
 
 
     # TODO: Complete compilation of ptopic keywords.
@@ -153,10 +153,20 @@ class RedditAgent:
         # Declare the main operation DataFrame.
         self.data = pandas.DataFrame(
             columns=[
-                'subm_id', 'subm_object', 'subm_title',
-                'subm_title_kprs', 'intxn_size', 'kprs_intxn',
-                'subma_kpr_intxn', 'subma_kpr_intxn_size', 'subma_kprs',
-                'success_probability', 'utterance_content', 'engagement_time', "comment_count", "subm_relevance_score"
+                'subm_object',
+                'subm_id',
+                'comment_count',
+                'title',
+                'title_intxn',
+                'title_intxn_size',
+                'title_kwds',
+                'subma_relevance_score',
+                'subma_kpr_intxn',
+                'subma_kpr_intxn_size',
+                'subma_kprs',
+                'subma_url',
+                'success_probability',
+                'utterance_content'
             ]
         )
 
@@ -184,7 +194,7 @@ class RedditAgent:
         """
 
         # Remove elements from 'data' that cannot be serialized.
-        t: pandas.DataFrame = self.data.drop("submission_object", 1)
+        t: pandas.DataFrame = self.data.drop("subm_object", 1)
 
 
         # Generate the archive FP.
@@ -243,7 +253,7 @@ class RedditAgent:
 
     # noinspection PyAttributeOutsideInit
     def start(self, work_subreddit: str, engage: bool, intxn_min_divider: int, process_method: str,
-              subm_fetch_limit: (int, None), analyze_subm_articles: bool,
+              subm_fetch_limit: (int, None), analyze_subm_articles: bool, archive_data: bool = True,
               analyze_subm_titles: bool= True, analyze_subm_relevance: bool = False):
         """
 
@@ -276,7 +286,10 @@ class RedditAgent:
         self.analyze_subm_articles = analyze_subm_articles
 
         # Define the boolean controller for analysis of Submission relevance.
-        self.analyze_subm_relevance = analyze_subm_relevance
+        self.analyze_subma_relevance = analyze_subm_relevance
+
+        # Define the boolean controller for the archival of 'data'.
+        self.archive_data = archive_data
 
         # Initialize the Subreddit to be used for work.
         self.work_subreddit = work_subreddit
@@ -364,7 +377,8 @@ class RedditAgent:
         finally:
 
             # Archive 'data'.
-            self.__archive_data__()
+            if self.archive_data:
+                self.__archive_data__()
 
 
         return 0
@@ -410,10 +424,10 @@ class RedditAgent:
                     # Perform Submission Article key-phrase analysis.
                     analysis.update(self.__analyze_subma_kprs__(submission))
 
-                if self.analyze_subm_relevance:
+                if self.analyze_subma_relevance:
 
                     # Perform relevance measurement.
-                    analysis["relevance_score"] = self.__analyze_subm_relevance__(submission)
+                    analysis["relevance_score"] = self.__analyze_subma_relevance__(submission)
 
             except IndicoError:
 
@@ -438,7 +452,7 @@ class RedditAgent:
         return self
 
 
-    def __analyze_subm_relevance__(self, submission: reddit.Submission):
+    def __analyze_subma_relevance__(self, submission: reddit.Submission):
         """
         Generates a definition of relevance to the ptopic for a given Submission.
 
@@ -511,7 +525,7 @@ class RedditAgent:
 
 
     # noinspection PyDictCreation
-    def __analyze_subm_title_kprs__(self, submission: reddit.Submission, return_subm_obj: bool = True):
+    def __analyze_subm_title_kprs__(self, submission: reddit.Submission, track_subm_obj: bool = True):
         """
         'Analyze Submission Keywords'
 
@@ -522,15 +536,9 @@ class RedditAgent:
 
 
         # Define the keywords for the given Submission title.
-        # NOTE: CURRENTLY USING JUST THE KEYWORDS GIVEN; NOT INCLUDING THEIR LIKELY RELEVANCE.
-        # TODO: Officially determine if we are to use a Submission's title's keywords, or the entire content of a
-        # TODO  Submission title.
-        #
-        # subm_title_keyword_analysis = indicoio.keywords(submission.title)
-        # subm_title_keywords = tuple(subm_title_keyword_analysis.keys())
-        """ PLACER """
-        subm_title_keywords = 0
-
+        subm_title_kprs = tuple(indicoio.keywords(submission.title).keys())
+        subm_title_kprs = tuple(map(lambda x: x.lower(), subm_title_kprs))
+        subm_title_kprs = self.remove_stopwords(subm_title_kprs)
 
         # Define a collection of the words in the Submission title.
         subm_title_tokens = tuple(map(lambda x: x.lower(), submission.title.split()))
@@ -552,7 +560,7 @@ class RedditAgent:
             "title": submission.title,
             "title_intxn": title_intxn,
             "title_intxn_size": float(keywords_intersections_count),
-            "title_kwds": subm_title_keywords
+            "title_kprs": subm_title_kprs
         }
 
 
@@ -564,7 +572,7 @@ class RedditAgent:
 
 
 
-        if return_subm_obj:
+        if track_subm_obj:
 
             # Append Submission object to the analysis.
             # NOTE: Attempting to serialize the main DataFrame with this field as a member will cause an

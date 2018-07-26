@@ -32,13 +32,14 @@ def process():
 
     # Initialize the process.
     machine.start(
-        work_subreddit= 'politics',
-        engage= False,
-        subm_fetch_limit= 1,
-        analyze_subm_articles= True,
-        intxn_min_divider= 3,
-        analyze_subm_relevance= False,
-        process_method="batch"
+        work_subreddit='politics',
+        engage=False,
+        subm_fetch_limit=5,
+        analyze_subm_articles=True,
+        intxn_min_divider=3,
+        analyze_subm_relevance=False,
+        process_method="batch",
+        archive_data=False
     )
 
 
@@ -53,21 +54,9 @@ def get_datetime():
 def main():
 
     x: pandas.DataFrame = pandas.read_json(
-        path_or_buf="../resources/dataframes/__pr_h_c__/data/2018-07-26_15-43-07.json")
+        path_or_buf="../resources/dataframes/__pr_h_c__/data/2018-07-26_17-47-38.json")
 
     print(x.to_string())
 
 
-def f(x):
-
-    if x == 1:
-        process()
-
-    elif x == 2:
-        main()
-
-    elif x == 3:
-        get_datetime()
-
-
-f(2)
+process()
