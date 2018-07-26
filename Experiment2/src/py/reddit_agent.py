@@ -24,7 +24,7 @@ import time
 import os
 from datetime import datetime
 from indicoio.utils import errors as indicoio_errors
-from indicoio.utils.errors import IndicoError as IndicoScrapingError
+from indicoio.utils.errors import IndicoError
 from nltk.corpus import stopwords as nltk_stopwords
 
 
@@ -59,7 +59,7 @@ class RedditAgent:
 
 
     # The collection of completed keyword analysis for Reddit Submissions.
-    _main_kwd_df = pandas.DataFrame()
+    data = pandas.DataFrame()
 
 
     # The Submission collection limit.
@@ -110,7 +110,7 @@ class RedditAgent:
         )
 
 
-        # Define location of the JSON file to archive '_main_kwd_df'.
+        # Define location of the JSON file to archive 'data'.
         self.FILEPATH_main_kwd_df = main_df_archive_filepath
 
 
@@ -145,7 +145,7 @@ class RedditAgent:
 
         # TODO: OPTIMIZE NAMING AND DATAFRAME.
         # Declare the main operation DataFrame.
-        self._main_kwd_df = pandas.DataFrame(
+        self.data = pandas.DataFrame(
             columns= [
                 'subm_title_keywords', 'intersection_size', 'keywords_intersection',
                 'aurl_kwd_intxn', 'aurl_kwd_intxn_size', 'subm_aurl_kwds',
@@ -173,7 +173,7 @@ class RedditAgent:
     # noinspection PyCompatibility
     def archive_main_dataframe(self):
         """
-        Currently archives field: '_main_kwd_df'. Future development will see this method allow for the archival of
+        Currently archives field: 'data'. Future development will see this method allow for the archival of
         any specified Class data field.
 
         # TODO: Update to allow for archival of any specified DataFrame.
@@ -181,8 +181,8 @@ class RedditAgent:
         :return:
         """
 
-        # Archive '_main_kwd_df'.
-        x: pandas.DataFrame = self._main_kwd_df.drop("submission_object", 1)
+        # Archive 'data'.
+        x: pandas.DataFrame = self.data.drop("submission_object", 1)
 
         x.to_json(path_or_buf = self.FILEPATH_main_kwd_df)
 
@@ -227,7 +227,7 @@ class RedditAgent:
         :return:
         """
 
-        print(type(self._main_kwd_df))
+        print(type(self.data))
 
         return 0
 
@@ -239,7 +239,14 @@ class RedditAgent:
               analyze_subm_titles: bool= True, analyze_subm_relevance: bool = False):
         """
 
-
+        :param analyze_subm_relevance:
+        :param analyze_subm_titles:
+        :param analyze_subm_articles:
+        :param engage:
+        :param intxn_min_divider:
+        :param process_method:
+        :param subm_fetch_limit: The amount of Submissions to fetch from the work Subreddit.
+        :param work_subreddit:
         :return:
         """
 
@@ -286,7 +293,7 @@ class RedditAgent:
         """
 
         # Initialize the Reddit operations handler.
-        self.reddit_op_handler = RedditOpHandler(reddit_instance=self.reddit_instance, subreddit=work_subreddit)
+        self.reddit_op_handler = RedditOpHandler(reddit_instance=self.reddit_instance, subreddit=self.work_subreddit)
 
         if method == "batch":
 
@@ -344,7 +351,7 @@ class RedditAgent:
 
         finally:
 
-            # Archive '_main_kwd_df'.
+            # Archive 'data'.
             self.archive_main_dataframe()
 
 
@@ -365,7 +372,7 @@ class RedditAgent:
         kpr_analyses = []
 
 
-        # Analyze every Submission collected, appending each analysis to '_main_kwd_df'.
+        # Analyze every Submission collected, appending each analysis to 'data'.
         for submission in self.r_submissions:
 
             # Define container for Submission title and SUBMA analyses.
@@ -379,44 +386,41 @@ class RedditAgent:
             analysis["comment_count"] = comment_count
 
 
-            if self.analyze_subm_titles:
+            try:
 
-                # Perform Submission title key-phrase analysis.
-                analysis.update(self.__analyze_subm_title_kwds__(submission))
+                if self.analyze_subm_titles:
 
-            if self.analyze_subm_articles:
+                    # Perform Submission title key-phrase analysis.
+                    analysis.update(self.__analyze_subm_title_kwds__(submission))
 
-                try:
+                if self.analyze_subm_articles:
 
                     # Perform Submission Article key-phrase analysis.
                     analysis.update(self.__analyze_subma_kprs__(submission))
 
-                except IndicoScrapingError:
-
-                    continue
-
-            if self.analyze_subm_relevance:
-
-                try:
+                if self.analyze_subm_relevance:
 
                     # Perform relevance measurement.
                     analysis["subm_relevance_score"] = self.__analyze_subm_relevance__(submission)
 
-                except indicoio_errors.IndicoError:
+            except IndicoError:
 
-                    continue
+                # Output status.
+                print("Dismissed Submission ", submission.id,
+                      " in '__analyze_submissions__' due to an Indico IO value error.")
+
+                continue
 
 
-            # Append the analysis to the collection for merging with '_main_kwd_df'.
+            # Append the analysis to the collection for merging with 'data'.
             kpr_analyses.append(analysis)
 
 
-        # Convert 'keyword_analyses' to DataFrame for concatenation with '_main_kwd_df'.
+        # Convert 'keyword_analyses' to DataFrame for concatenation with 'data'.
         kpr_analyses = pandas.DataFrame(kpr_analyses)
 
-
-        # Update '_main_kwd_df'.
-        self._main_kwd_df = pandas.concat([self._main_kwd_df, kpr_analyses])
+        # Update 'data'.
+        self.data = pandas.concat([self.data, kpr_analyses])
 
 
         return 0
@@ -462,30 +466,30 @@ class RedditAgent:
 
 
         # Generate keyword analysis for the AURL.
-        subm_aurl_kwd_analysis = indicoio.keywords(subm_url)
+        subma_kpr_analysis = indicoio.keywords(subm_url)
 
         # Retrieve the exclusively the keywords identified for the AURL.
-        subm_aurl_kwds = tuple(subm_aurl_kwd_analysis.keys())
+        subma_kprs = tuple(subma_kpr_analysis.keys())
 
 
         # Normalize all keywords to be lowercase.
-        subm_aurl_kwds = tuple(map(lambda x: x.lower(), subm_aurl_kwds))
+        subma_kprs = tuple(map(lambda x: x.lower(), subma_kprs))
 
 
         # Define the intersection of the ptopic keywords and the AURL.
-        subm_aurl_intxn = self.intersect(self.ptopic_kpr_bag, subm_aurl_kwds)
+        subma_intxn = self.intersect(self.ptopic_kpr_bag, subma_kprs)
 
 
         # Initialize the keyword intersection count.
-        subm_aurl_intxn_count = len(subm_aurl_intxn)
+        subma_intxn_count = len(subma_intxn)
 
 
         # Define a structure to contain all measures relevant to analysis.
         analysis = {
-            "aurl_kwd_intxn": subm_aurl_intxn,
-            "aurl_kwd_intxn_size": float(subm_aurl_intxn_count),
-            "subm_aurl_kwds": subm_aurl_kwds,
-            "sub_aurl_url": subm_url
+            "subma_kpr_intxn": subma_intxn,
+            "subma_kpr_intxn_size": float(subma_intxn_count),
+            "subma_kprs": subma_kprs,
+            "subma_url": subm_url
         }
 
 
@@ -515,11 +519,11 @@ class RedditAgent:
         subm_title_keywords = 0
 
 
-        # Define a collection of the words in a Submission title.
+        # Define a collection of the words in the Submission title.
         subm_title_tokens = tuple(map(lambda x: x.lower(), submission.title.split()))
 
-        # Remove English stopwords from the Submission title word content set.
-        subm_title_tokens = self.remove_stopwords(corpus= subm_title_tokens)
+        # Remove English stopwords from the Submission title token set.
+        subm_title_tokens = self.remove_stopwords(corpus=subm_title_tokens)
 
         # Define the intersection of the topic keywords bag and the Submission's title's content.
         title_intxn = self.intersect(self.ptopic_kpr_bag, subm_title_tokens)
@@ -582,20 +586,20 @@ class RedditAgent:
             self.reddit_op_handler.submit_submission_expression(actionable_submission=x[0], utterance_content=x[1])
 
 
-        for index, row in self._main_kwd_df.iterrows():
+        for index, row in self.data.iterrows():
 
-            if self.__clearance__(self._main_kwd_df.loc[index]):
+            if self.__clearance__(self.data.loc[index]):
 
                 # Generate the utterance message.
-                utterance_message = self.__generate_utterance__(submission_data=self._main_kwd_df.loc[index])
+                utterance_message = self.__generate_utterance__(submission_data=self.data.loc[index])
 
 
                 # Define container of data for operation of Submission engage.
-                operation_fields = (self._main_kwd_df.submission_object[index], utterance_message)
+                operation_fields = (self.data.submission_object[index], utterance_message)
 
 
                 # Archive the utterance message content.
-                self._main_kwd_df.at[index, "utterance_content"] = utterance_message
+                self.data.at[index, "utterance_content"] = utterance_message
 
 
                 try:
@@ -616,7 +620,7 @@ class RedditAgent:
 
 
                 # Record the engagement time.
-                self._main_kwd_df.at[index, "engagement_time"] = str(datetime.now())
+                self.data.at[index, "engagement_time"] = str(datetime.now())
 
 
                 break
