@@ -36,7 +36,7 @@ def process():
         engage= False,
         subm_fetch_limit= 1,
         analyze_subm_articles= True,
-        intersection_min_divider= 3,
+        intxn_min_divider= 3,
         analyze_subm_relevance= False
     )
 

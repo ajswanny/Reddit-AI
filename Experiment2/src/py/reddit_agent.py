@@ -124,6 +124,9 @@ class RedditAgent:
 
     def __init_operation_lobes__(self, work_subreddit: str):
 
+
+        self.reddit_op_handler = RedditOpHandler(reddit_instance=self.reddit_instance, subreddit=work_subreddit)
+
         self._input_lobe = self.__new_InputLobe__(
             reddit_instance= self.reddit_instance,
             subreddit= work_subreddit
@@ -251,7 +254,7 @@ class RedditAgent:
 
 
     # noinspection PyAttributeOutsideInit
-    def start(self, work_subreddit: str, engage: bool, intersection_min_divider: int,
+    def start(self, work_subreddit: str, engage: bool, intxn_min_divider: int,
               subm_fetch_limit: (int, None), analyze_subm_articles: bool, override: bool= False,
               analyze_subm_titles: bool= True, analyze_subm_relevance: bool = False):
         """
@@ -261,58 +264,30 @@ class RedditAgent:
         """
 
         # Define all necessary fields.
-        self.set__start__values(
-            engage,
-            intersection_min_divider,
-            subm_fetch_limit,
-            analyze_subm_articles,
-            analyze_subm_titles,
-            analyze_subm_relevance
-        )
+        # Define True condition for 'engage' if desired.
+        if engage:
+            self.engage = True
+
+        # Define divider for specified key-phrase-intersection minimum.
+        self.intersection_min_divider = intxn_min_divider
+
+        # Define the Submission collection limit.
+        self.subm_fetch_limit = subm_fetch_limit
+
+        # Define the boolean controller for analysis of Submission titles.
+        self.analyze_subm_titles = analyze_subm_titles
+
+        # Define the boolean controller for analysis of Submission articles.
+        self.analyze_subm_articles = analyze_subm_articles
+
+        # Define the boolean controller for analysis of Submission relevance.
+        self.analyze_subm_relevance = analyze_subm_relevance
 
 
         self.__init_keyword_workflow__(work_subreddit=work_subreddit)
 
 
         return self
-
-
-
-    def set__start__values(self, engage: bool, intersection_min_divider: int,
-                           subm_fetch_limit: (int, None), analyze_subm_articles: bool,
-                           analyze_subm_titles: bool, analyze_subm_relevance: bool):
-        """
-        Trivially defines the values for the '__start__' method.
-
-        :return:
-        """
-
-        # Define True condition for 'engage' if desired.
-        if engage:
-            self.engage = True
-
-
-        # Define specified intersection minimum determination divider.
-        self.intersection_min_divider = intersection_min_divider
-
-
-        # Define the Submission collection limit.
-        self.subm_fetch_limit = subm_fetch_limit
-
-
-        # Define the boolean controller for analysis of Submission titles.
-        self.analyze_subm_titles = analyze_subm_titles
-
-
-        # Define the boolean controller for analysis of Submission articles.
-        self.analyze_subm_articles = analyze_subm_articles
-
-
-        # Define the boolean controller for analysis of Submission relevance.
-        self.analyze_subm_relevance = analyze_subm_relevance
-
-
-        return 0
 
 
 
@@ -368,7 +343,7 @@ class RedditAgent:
         # Command collection of Submission objects. Note: the '__collect_submissions__' method operates on the default
         # Subreddit for the InputLobe instance, which is defined by the 'work_subreddit' parameter for the call to
         # '__init_operation_lobes__' method.
-        self.submission_objects = self._input_lobe.__collect_submissions__(
+        self.submission_objects = self.reddit_op_handler.__collect_submissions__(
             return_objects= True,
             fetch_limit= self.subm_fetch_limit
         )
@@ -428,7 +403,7 @@ class RedditAgent:
             :return:
             """
 
-            self._output_lobe.submit_submission_expression(actionable_submission=x[0], utterance_content=x[1])
+            self.reddit_op_handler.submit_submission_expression(actionable_submission=x[0], utterance_content=x[1])
 
 
         for index, row in self._main_kwd_df.iterrows():
