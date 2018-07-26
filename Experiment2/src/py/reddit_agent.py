@@ -24,6 +24,7 @@ import time
 import os
 from datetime import datetime
 from indicoio.utils import errors as indicoio_errors
+from indicoio.utils.errors import IndicoError as IndicoScrapingError
 from nltk.corpus import stopwords as nltk_stopwords
 
 
@@ -114,32 +115,11 @@ class RedditAgent:
 
 
         # Initialize dependencies for keyword analysis.
-        self.__init_kwd_process_metadata__()
+        self.__init_kpr_metadata__()
 
 
 
-    #-}
-
-
-
-    def __init_operation_lobes__(self, work_subreddit: str):
-
-
-        self.reddit_op_handler = RedditOpHandler(reddit_instance=self.reddit_instance, subreddit=work_subreddit)
-
-        self._input_lobe = self.__new_InputLobe__(
-            reddit_instance= self.reddit_instance,
-            subreddit= work_subreddit
-        )
-
-        self._output_lobe = self.__new_OutputLobe__(
-            reddit_instance= self.reddit_instance,
-            subreddit= work_subreddit
-        )
-
-
-
-    def __init_kwd_process_metadata__(self):
+    def __init_kpr_metadata__(self):
         """
         Initializes all necessary keyword-relative data fields.
         :return:
@@ -254,8 +234,8 @@ class RedditAgent:
 
 
     # noinspection PyAttributeOutsideInit
-    def start(self, work_subreddit: str, engage: bool, intxn_min_divider: int,
-              subm_fetch_limit: (int, None), analyze_subm_articles: bool, override: bool= False,
+    def start(self, work_subreddit: str, engage: bool, intxn_min_divider: int, process_method: str,
+              subm_fetch_limit: (int, None), analyze_subm_articles: bool,
               analyze_subm_titles: bool= True, analyze_subm_relevance: bool = False):
         """
 
@@ -263,10 +243,10 @@ class RedditAgent:
         :return:
         """
 
-        # Define all necessary fields.
         # Define True condition for 'engage' if desired.
         if engage:
             self.engage = True
+
 
         # Define divider for specified key-phrase-intersection minimum.
         self.intersection_min_divider = intxn_min_divider
@@ -283,40 +263,34 @@ class RedditAgent:
         # Define the boolean controller for analysis of Submission relevance.
         self.analyze_subm_relevance = analyze_subm_relevance
 
+        # Initialize the Subreddit to be used for work.
+        self.work_subreddit = work_subreddit
 
-        self.__init_keyword_workflow__(work_subreddit=work_subreddit)
+
+        # Initialize the Agent work process.
+        self.__init_workflow__(method= process_method)
 
 
         return self
 
 
 
-    def __init_keyword_workflow__(self, work_subreddit: str):
+    def __init_workflow__(self, method: str):
         """
 
-        :return:
-        """
-
-        self.__setup_process__(method="standard", work_subreddit= work_subreddit)
-
-
-        return 0
-
-
-
-    def __setup_process__(self, method: str, work_subreddit: str):
-        """
-        Standard: collect 'hot' Submissions.
+        Batch: collect 'hot' Submissions.
 
         Stream: continuously collect Submissions, perform analysis, and conduct utterance.
 
-        :param method:
         :return:
         """
 
-        if method == "standard":
+        # Initialize the Reddit operations handler.
+        self.reddit_op_handler = RedditOpHandler(reddit_instance=self.reddit_instance, subreddit=work_subreddit)
 
-            self.__standard_process__(work_subreddit= work_subreddit)
+        if method == "batch":
+
+            self.__batch_process__()
 
         elif method == "stream":
 
@@ -327,34 +301,29 @@ class RedditAgent:
         return 0
 
 
-
-    def __standard_process__(self, work_subreddit: str):
+    def __batch_process__(self):
         """
         Begin work using a standard Submission object retrieval using the "hot" listing type.
 
         :return:
         """
 
-        # Create InputLobe object to produce Submission metadata for the "news" Subreddit.
-        # Create OutputLobe object to handle expression utterance.
-        self.__init_operation_lobes__(work_subreddit= work_subreddit)
-
-
         # Command collection of Submission objects. Note: the '__collect_submissions__' method operates on the default
         # Subreddit for the InputLobe instance, which is defined by the 'work_subreddit' parameter for the call to
         # '__init_operation_lobes__' method.
-        self.submission_objects = self.reddit_op_handler.__collect_submissions__(
+        self.r_submissions = self.reddit_op_handler.__collect_submissions__(
             return_objects= True,
             fetch_limit= self.subm_fetch_limit
         )
 
 
         # Calculate average length of Submission title length.
-        self.avg_subm_title_size = self.__calc_avg_subm_title_size__(collection= self.submission_objects)
+        self.avg_subm_title_size = self.__calc_avg_subm_title_size__(collection=self.r_submissions)
 
 
-        # Perform keyword-based success calc_response_probability analysis, yielding a DataFrame with metadata respective analyses.
-        self.__process_subm_analysis__()
+        # Perform key-phrase-based success response probability analysis, yielding a DataFrame with metadata of
+        # respective analyses.
+        self.__analyze_submissions__()
 
 
         try:
@@ -500,7 +469,7 @@ class RedditAgent:
 
 
         # Define the average Submission title size.
-        return int(x / len(self.submission_objects))
+        return int(x / len(self.r_submissions))
 
 
 
@@ -524,50 +493,47 @@ class RedditAgent:
 
 
 
-    def __process_subm_analysis__(self):
+    def __analyze_submissions__(self):
         """
-        A mid-level management method for measurement of Submission engagement success calc_response_probability.
-        The purpose of this method is to allow for the monitoring of the keyword-based
+        A mid-level management method for measurement of Submission engagement success probability.
+        The purpose of this method is to allow for the monitoring of the key-phrase-based
         analysis loop and provide accessibility to intervention for optimization or
         modification.
 
         :return:
         """
 
-
-        # Create temporary container for keyword analyses.
-        keyword_analyses = []
-
-
-        indico_scraping_error = indicoio_errors.IndicoError
+        # Create temporary container for key-phrase analyses.
+        kpr_analyses = []
 
 
         # Analyze every Submission collected, appending each analysis to '_main_kwd_df'.
-        for submission in self.submission_objects:
+        for submission in self.r_submissions:
 
-            # Define container for Submission title and AURL analyses.
+            # Define container for Submission title and SUBMA analyses.
             analysis = {}
 
             # Update 'analysis' with Submission metadata.
-            submission.comments.replace_more(limit= 0)
-            comment_count = len(submission.comments.list())
+            submission.comments.replace_more(limit=0)
 
+            # Record the amount of comments the Submission has.
+            comment_count = len(submission.comments.list())
             analysis["comment_count"] = comment_count
 
 
             if self.analyze_subm_titles:
 
-                # Perform Submission title keyword analysis.
+                # Perform Submission title key-phrase analysis.
                 analysis.update(self.__analyze_subm_title_kwds__(submission))
 
             if self.analyze_subm_articles:
 
                 try:
 
-                    # Perform Submission AURL keyword analysis.
-                    analysis.update(self.__analyze_subm_aurl_kwds__(submission))
+                    # Perform Submission Article key-phrase analysis.
+                    analysis.update(self.__analyze_subma_kprs__(submission))
 
-                except indico_scraping_error:
+                except IndicoScrapingError:
 
                     continue
 
@@ -578,25 +544,24 @@ class RedditAgent:
                     # Perform relevance measurement.
                     analysis["subm_relevance_score"] = self.__analyze_subm_relevance__(submission)
 
-                except indico_scraping_error:
+                except indicoio_errors.IndicoError:
 
                     continue
 
 
             # Append the analysis to the collection for merging with '_main_kwd_df'.
-            keyword_analyses.append(analysis)
+            kpr_analyses.append(analysis)
 
 
         # Convert 'keyword_analyses' to DataFrame for concatenation with '_main_kwd_df'.
-        keyword_analyses = pandas.DataFrame(keyword_analyses)
+        kpr_analyses = pandas.DataFrame(kpr_analyses)
 
 
         # Update '_main_kwd_df'.
-        self._main_kwd_df = pandas.concat([self._main_kwd_df, keyword_analyses])
+        self._main_kwd_df = pandas.concat([self._main_kwd_df, kpr_analyses])
 
 
         return 0
-
 
 
     def __analyze_subm_relevance__(self, submission: reddit.Submission):
@@ -604,21 +569,18 @@ class RedditAgent:
         Generates a definition of relevance to the ptopic for a given Submission.
 
         :return:
+        :exception Cannot be static: must access current Indico IO authentication.
         """
 
         # Define alias to linked URL of the provided Submission.
         subm_url = submission.url
 
 
+        # TODO: Optimize.
         # Generate a relevance measure.
         relevance_analyses = indicoio.relevance(
             [submission.title, subm_url],
-            [
-                "Puerto Rico Humanitarian Crisis",
-                # "Humanitarian Crisis",
-                # "Empathy",
-                # "Anger"
-            ]
+            ["Puerto Rico Humanitarian Crisis"]
         )
 
 
@@ -632,12 +594,9 @@ class RedditAgent:
 
 
 
-    def __analyze_subm_aurl_kwds__(self, submission: reddit.Submission):
+    def __analyze_subma_kprs__(self, submission: reddit.Submission):
         """
-        Performs keyword intersection analysis on the ptopic keywords and a Submission's linked article accessed by an
-        attached URL.
-
-        This attached article for a Submission is referenced as "AURL".
+        Performs key-phrase intersection analysis on the ptopic key-phrases and a Submission's linked article.
 
         :return:
         """
@@ -706,9 +665,7 @@ class RedditAgent:
         # Remove English stopwords from the Submission title word content set.
         subm_title_tokens = self.remove_stopwords(corpus= subm_title_tokens)
 
-        # Define the intersection of the topic keywords bag and the Submission's title content.
-        # FIXME Currently using the entire set of words from Submission titles -- this is naturally what we as people do
-        # FIXME when reading documents to identify relevance to a certain topic.
+        # Define the intersection of the topic keywords bag and the Submission's title's content.
         title_intxn = self.intersect(self.ptopic_kpr_bag, subm_title_tokens)
 
 
