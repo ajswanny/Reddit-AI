@@ -40,7 +40,7 @@ class RedditOpHandler:
             self.default_subreddit = self.reddit_instance.subreddit("news")
 
 
-    def __collect_submissions__(self, listing_type: str = None, fetch_limit=None, return_objects=True):
+    def __collect_submissions__(self, listing_type: str = None, fetch_limit=None):
         """
 
         :param listing_type:
@@ -49,34 +49,30 @@ class RedditOpHandler:
             - "controversial"
             - "rising"
         :param fetch_limit:
-        :param return_objects:
         :return:
         """
 
+        # Define the container for Reddit Submissions.
         submissions = []
 
-        print("\n", "-" * 50, '\n')
-        print("\tCollecting Submission Objects...")
+        # Output status.
+        print("Collecting Submission Objects...")
 
+        # Fetch the Reddit Submissions.
         for submission in self.default_subreddit.hot(limit=fetch_limit):
 
             # Store Submission in 'submissions'.
             submissions.append(submission)
 
-        print("\tTask completed.")
-        print("\n", "-" * 50, '\n')
-
-        if return_objects:
-
-            return submissions
-
-        else:
-
-            return 0
+        # Output status.
+        print("...Done")
 
 
-    # TODO: RENAME.
-    def submit_submission_expression(self, actionable_submission: reddit.Submission, utterance_content: str):
+        # Return the Submissions.
+        return submissions
+
+
+    def __create_comment__(self, actionable_submission: reddit.Submission, utterance_content: str):
         """
         A high-level management function to oversee expression utterance for Reddit Submissions.
 

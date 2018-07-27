@@ -257,7 +257,6 @@ class RedditAgent:
         # Subreddit for the InputLobe instance, which is defined by the 'work_subreddit' parameter for the call to
         # '__init_operation_lobes__' method.
         self.r_submissions = self.reddit_op_handler.__collect_submissions__(
-            return_objects=True,
             fetch_limit=self.subm_fetch_limit
         )
 
@@ -528,7 +527,7 @@ class RedditAgent:
 
                     # Create and deliver a message for the respective Submission providing the Submission object as the
                     # actionable Submission and the utterance to be used.
-                    self.reddit_op_handler.submit_submission_expression(
+                    self.reddit_op_handler.__create_comment__(
                         actionable_submission=operation_fields[0],
                         utterance_content=operation_fields[1]
                     )
