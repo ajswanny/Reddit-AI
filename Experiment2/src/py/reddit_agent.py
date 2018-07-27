@@ -11,19 +11,15 @@ The script for initialization and operation of a Reddit AI agent.
 from .reddit_op_handler import RedditOpHandler
 
 # Import third-party modules.
-import _pickle as pickle
 import indicoio
 import json
 import pandas
-from pprint import pprint
 import praw
 import praw.exceptions as praw_exceptions
 import praw.models as reddit
 import random
 import time
-import os
 from datetime import datetime
-from indicoio.utils import errors as indicoio_errors
 from indicoio.utils.errors import IndicoError
 from nltk.corpus import stopwords as nltk_stopwords
 
@@ -33,15 +29,14 @@ class RedditAgent:
     The Reddit Agent for spreading awareness throughout Reddit comment sections about a given problem topic.
     """
 
-    # TODO: Declare all Class fields here.
 
     # Declare global boolean operation controllers.
     engage = False                          # Indicates if the Agent is to engage in utterance with Submissions.
     analyze_subm_articles = False           # Indicates whether the algorithm should consider a Submission's linked
-                                            #   article for keyword analysis.
+                                            # article for keyword analysis.
     analyze_subm_titles = False             # Indicates if the algorithm is to consider a Submission's title for keyword
                                             #   analysis.
-    analyze_relevance = False          # The boolean controller for analysis of Submission relevance.
+    analyze_relevance = False               # The boolean controller for analysis of Submission relevance.
 
 
     # TODO: Complete compilation of ptopic keywords.
@@ -57,10 +52,8 @@ class RedditAgent:
     # The tuple containing English stop words.
     stop_words = tuple(nltk_stopwords.words("english"))
 
-
     # The collection of completed keyword analysis for Reddit Submissions.
     data = pandas.DataFrame()
-
 
     # The Submission collection limit.
     subm_fetch_limit = 0
@@ -74,10 +67,8 @@ class RedditAgent:
     # The divider for determination of minimum keyword intersection magnitude.
     intersection_min_divider = 0
 
-
     # The tuple of sentences to be used for expression utterance.
     utterance_sentences = tuple(open("../resources/utterances/utterance_sentences_one.txt").read().splitlines())
-
 
     # The authentication for the Indico NLP API.
     indicoio.config.api_key = '43c624474f147b8b777a144807e7ca95'
@@ -146,7 +137,7 @@ class RedditAgent:
         self.ptopic_kpr_bag = list(map(lambda x: x.lower(), self.ptopic_kpr_bag))
 
         # Remove stop words.
-        self.ptopic_kpr_bag = self.remove_stopwords(self.ptopic_kpr_bag)
+        self.ptopic_kpr_bag = self.__remove_stopwords__(self.ptopic_kpr_bag)
 
 
         # Declare the main operation DataFrame.
@@ -173,86 +164,13 @@ class RedditAgent:
         return self
 
 
-    def remove_stopwords(self, corpus: (list, tuple)):
-        """
-        Returns the given corpus stripped of English stopwords.
-
-        :param corpus:
-        :return:
-        """
-
-        return [word for word in corpus if word not in self.stop_words]
-
-
-    # noinspection PyCompatibility
-    def __archive_data__(self):
-        """
-        Currently archives field: 'data'.
-
-        :return:
-        """
-
-        # Remove elements from 'data' that cannot be serialized.
-        t: pandas.DataFrame = self.data.drop("subm_object", 1)
-
-
-        # Generate the archive FP.
-        self.data_archive_fp = \
-            "../resources/dataframes/" + str(self.problem_topic_id) + "/data/" + self.op_datetime_stamp + ".json"
-
-
-        t.to_json(path_or_buf = self.data_archive_fp)
-
-
-        return 0
-
-
-    @staticmethod
-    def intersect(list_x: (list, tuple), list_y: (list, tuple)):
-        """
-
-        :param list_x:
-        :param list_y:
-        :return:
-        """
-
-        return list(set(list_x) & set(list_y))
-
-
-    @staticmethod
-    def normalize(value, minimum, maximum):
-        """
-
-        :param value:
-        :param minimum:
-        :param maximum:
-        :return:
-        """
-
-        numerator = value - minimum
-        denominator = maximum - minimum
-
-
-        return numerator / denominator
-
-
-    def __test_functionality__(self):
-        """
-
-        :return:
-        """
-
-        print(type(self.data))
-
-        return 0
-
-
     # noinspection PyAttributeOutsideInit
     def start(self, work_subreddit: str, engage: bool, intxn_min_divider: int, process_method: str,
               subm_fetch_limit: (int, None), analyze_subm_articles: bool, archive_data: bool = True,
               analyze_subm_titles: bool= True, analyze_subm_relevance: bool = False):
         """
 
+        :param archive_data:
         :param analyze_subm_relevance:
         :param analyze_subm_titles:
         :param analyze_subm_articles:
@@ -298,7 +216,6 @@ class RedditAgent:
         return self
 
 
-
     def __init_workflow__(self, method: str):
         """
 
@@ -318,7 +235,7 @@ class RedditAgent:
             self.op_datetime_stamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
             # Begin the batch process.
-            self.__batch_process__()
+            self.__run_batch_process__()
 
         elif method == "stream":
 
@@ -329,7 +246,7 @@ class RedditAgent:
         return 0
 
 
-    def __batch_process__(self):
+    def __run_batch_process__(self):
         """
         Begin work using a standard Submission object retrieval using the "hot" listing type.
 
@@ -448,6 +365,7 @@ class RedditAgent:
         return self
 
 
+    # noinspection PyMethodMayBeStatic
     def __analyze_relevance__(self, submission: reddit.Submission):
         """
         Generates a definition of relevance to the ptopic for a given Submission.
@@ -480,7 +398,6 @@ class RedditAgent:
 
         :return:
         """
-
 
         # Define alias to linked URL of the provided Submission.
         subm_url = submission.url
@@ -516,7 +433,6 @@ class RedditAgent:
         return analysis
 
 
-
     # noinspection PyDictCreation
     def __analyze_subm_title_kprs__(self, submission: reddit.Submission, track_subm_obj: bool = True):
         """
@@ -534,14 +450,14 @@ class RedditAgent:
         # Define the keywords for the given Submission title.
         subm_title_kprs = tuple(indicoio.keywords(submission.title).keys())
         subm_title_kprs = tuple(map(lambda x: x.lower(), subm_title_kprs))
-        subm_title_kprs = self.remove_stopwords(subm_title_kprs)
+        subm_title_kprs = self.__remove_stopwords__(subm_title_kprs)
 
 
         # Define a collection of the words in the Submission title.
         subm_title_tokens = tuple(map(lambda x: x.lower(), submission.title.split()))
 
         # Remove English stopwords from the Submission title token set.
-        subm_title_tokens = self.remove_stopwords(corpus=subm_title_tokens)
+        subm_title_tokens = self.__remove_stopwords__(corpus=subm_title_tokens)
 
         # Define the intersection of the topic key-phrases bag and the Submission's title's content.
         title_intxn = self.intersect(self.ptopic_kpr_bag, subm_title_tokens)
@@ -570,7 +486,6 @@ class RedditAgent:
 
 
         return analysis
-
 
 
     def __process_subm_engages__(self):
@@ -635,7 +550,6 @@ class RedditAgent:
         return 0
 
 
-
     def __clearance__(self, submission_data: pandas.Series):
         """
         Determines if the Agent is to engage in a Submission, observing the Submission metadata.
@@ -657,7 +571,6 @@ class RedditAgent:
 
 
         return False
-
 
 
     def __calc_avg_subm_title_size__(self, collection: (list, tuple)):
@@ -714,7 +627,7 @@ class RedditAgent:
         return self.reddit_instance.submission(id=submission_id)
 
 
-
+    @DeprecationWarning
     def __calc_response_probability__(self, method: str, values: tuple, normalize: bool= True):
         """
         Calculates the __calc_response_probability__ of success, judging this measure with respect to the intersection
@@ -730,8 +643,8 @@ class RedditAgent:
 
         if method == "keyword":
 
-            # Initialize a __calc_response_probability__ measure; this tuple index refers to the sum of the amount of values
-            # in the intersection list. That is, the amount of keywords that intersected.
+            # Initialize a __calc_response_probability__ measure; this tuple index refers to the sum of the amount of
+            #  values in the intersection list. That is, the amount of keywords that intersected.
             success_probability = values[3]
 
 
@@ -746,3 +659,60 @@ class RedditAgent:
                 return success_probability
 
 
+    # noinspection PyCompatibility
+    def __archive_data__(self):
+        """
+        Currently archives field: 'data'.
+
+        :return:
+        """
+
+        # Remove elements from 'data' that cannot be serialized.
+        t: pandas.DataFrame = self.data.drop("subm_object", 1)
+
+        # Generate the archive FP.
+        self.data_archive_fp = \
+            "../resources/dataframes/" + str(self.problem_topic_id) + "/data/" + self.op_datetime_stamp + ".json"
+
+        t.to_json(path_or_buf=self.data_archive_fp)
+
+        return 0
+
+
+    def __remove_stopwords__(self, corpus: (list, tuple)):
+        """
+        Returns the given corpus stripped of English stopwords.
+
+        :param corpus:
+        :return:
+        """
+
+        return [word for word in corpus if word not in self.stop_words]
+
+
+    @staticmethod
+    def intersect(list_x: (list, tuple), list_y: (list, tuple)):
+        """
+
+        :param list_x:
+        :param list_y:
+        :return:
+        """
+
+        return list(set(list_x) & set(list_y))
+
+
+    @staticmethod
+    def normalize(value, minimum, maximum):
+        """
+
+        :param value:
+        :param minimum:
+        :param maximum:
+        :return:
+        """
+
+        numerator = value - minimum
+        denominator = maximum - minimum
+
+        return numerator / denominator
