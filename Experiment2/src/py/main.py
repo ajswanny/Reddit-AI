@@ -39,7 +39,7 @@ def process():
         intxn_min_divider=3,
         analyze_subm_relevance=False,
         process_method="batch",
-        archive_data=False
+        archive_data=True
     )
 
 
@@ -53,10 +53,12 @@ def get_datetime():
 
 def main():
 
+    # process()
+
     x: pandas.DataFrame = pandas.read_json(
-        path_or_buf="../resources/dataframes/__pr_h_c__/data/2018-07-26_17-47-38.json")
+        path_or_buf="../resources/dataframes/__pr_h_c__/data/2018-07-26_20-51-31.json")
 
     print(x.to_string())
 
 
-process()
+main()

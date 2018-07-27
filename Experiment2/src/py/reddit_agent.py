@@ -427,7 +427,7 @@ class RedditAgent:
                 if self.analyze_subma_relevance:
 
                     # Perform relevance measurement.
-                    analysis["relevance_score"] = self.__analyze_subma_relevance__(submission)
+                    analysis["subma_relevance_score"] = self.__analyze_subma_relevance__(submission)
 
             except IndicoError:
 
@@ -527,9 +527,12 @@ class RedditAgent:
     # noinspection PyDictCreation
     def __analyze_subm_title_kprs__(self, submission: reddit.Submission, track_subm_obj: bool = True):
         """
-        'Analyze Submission Keywords'
-
         Performs keyword intersection analysis for the topic keyword collection and a given Submission's title.
+
+        In this method, we perform the key-phrase analysis for the Submission's title and the problem topic key-phrases.
+        For the title, we perform an intersection of its entire token (word) set, stripped of English stopwords, and
+        the problem topic key-phrase bag. We use a Submission's title's entire token set because this is analogous to
+        manual evaluation of relevancy. The Submission's title's key-phrases are archived for possible necessity.
 
         :return:
         """
@@ -540,13 +543,14 @@ class RedditAgent:
         subm_title_kprs = tuple(map(lambda x: x.lower(), subm_title_kprs))
         subm_title_kprs = self.remove_stopwords(subm_title_kprs)
 
+
         # Define a collection of the words in the Submission title.
         subm_title_tokens = tuple(map(lambda x: x.lower(), submission.title.split()))
 
         # Remove English stopwords from the Submission title token set.
         subm_title_tokens = self.remove_stopwords(corpus=subm_title_tokens)
 
-        # Define the intersection of the topic keywords bag and the Submission's title's content.
+        # Define the intersection of the topic key-phrases bag and the Submission's title's content.
         title_intxn = self.intersect(self.ptopic_kpr_bag, subm_title_tokens)
 
 
@@ -567,8 +571,9 @@ class RedditAgent:
         # Define a calc_response_probability measure of success and append this to the 'analysis' dictionary.
         # This figure is used to determine whether or not the Agent will submit a textual expression
         # to a Reddit Submission.
-        # TODO: This measure is to be optimized in the future.
-        analysis["success_probability"] = self.calc_response_probability(method="keyword", values= tuple(analysis.values()))
+        # TODO: OPTIMIZE.
+        analysis["success_probability"] = \
+            self.calc_response_probability(method="keyword", values=tuple(analysis.values()))
 
 
 
@@ -591,22 +596,13 @@ class RedditAgent:
         :return:
         """
 
+        # TODO: DEFINE THE OFFICIAL METRIC FOR THIS FIELD.
         # Define the minimum intersection size.
         # self.intersection_min = int(self.avg_subm_title_size / self.intersection_min_divider)
         self.kwd_intxn_min = 3
 
 
-        def out(x: tuple):
-            """
-            Implementer of expression utterance operation.
-
-            :param x:
-            :return:
-            """
-
-            self.reddit_op_handler.submit_submission_expression(actionable_submission=x[0], utterance_content=x[1])
-
-
+        # TODO: DETERMINE IF "row" IS NECESSARY.
         for index, row in self.data.iterrows():
 
             if self.__clearance__(self.data.loc[index]):
@@ -625,26 +621,25 @@ class RedditAgent:
 
                 try:
 
-                    # Create and deliver a message for the respective Submission.
-                    # We provide the Submission object as the actionable Submission and the Submission metadata.
-                    out(operation_fields)
+                    print("Delaying process for 10 minutes to avoid 'excessive posting' error. Waiting...")
+                    # Delay process to avoid encountering an "excessive posting" error from the Reddit API.
+                    time.sleep(600)
+                    print("...Done")
 
-                except praw.exceptions.APIException as E:
+                    # Create and deliver a message for the respective Submission providing the Submission object as the
+                    # actionable Submission and the utterance to be used.
+                    self.reddit_op_handler.submit_submission_expression(
+                        actionable_submission=operation_fields[0],
+                        utterance_content=operation_fields[1]
+                    )
+
+                    # Record the engagement time.
+                    self.data.at[index, "engagement_time"] = str(datetime.now())
+
+                except praw.exceptions.APIException as e:
 
                     # Output error details and delay operation.
-                    print("Caught error: ", E.message, "\nWaiting...")
-                    time.sleep(600)
-
-                finally:
-
-                    out(operation_fields)
-
-
-                # Record the engagement time.
-                self.data.at[index, "engagement_time"] = str(datetime.now())
-
-
-                break
+                    print("Caught error: ", e.message, "...Dismissing Submission: ", self.data.at[index, "subm_id"])
 
 
         return 0
@@ -664,8 +659,8 @@ class RedditAgent:
         clearance = False
 
 
-        # Determine clearance status. Clearance evaluates as true if the magnitude of the intersection is greater than
-        # or equal to 'intersection_min'.
+        # Determine clearance status. Clearance evaluates as true if the magnitude of one of the intersections is
+        # greater than or equal to 'intersection_min' or if the calculated Submission Article relevance score.
         if (submission_data.intersection_size or submission_data.aurl_kwd_intxn_size) >= self.kwd_intxn_min:
 
             clearance = True
