@@ -2,6 +2,8 @@
 Created by Alexander Swanson on 6/25/18.
 Copyright (c) 2018, Alexander Joseph Swanson Villares
 alexjosephswanson@gmail.com
+
+The script for the Reddit AI agent that implements DialogFlow.
 """
 
 from Experiment3.src.auth import GCPAuthentication
