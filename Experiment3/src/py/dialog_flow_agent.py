@@ -79,6 +79,7 @@ class DialogFlowAgent:
         # # Language code.
         # self.gcp_language_code = self.gcp_language_code
 
+
         # Session client.
         self.gcp_session_client = dialogflow.SessionsClient()
 
