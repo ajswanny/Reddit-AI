@@ -28,7 +28,7 @@ def main(submission_id):
 
 
     # Start the Agent's main function.
-    dialog_flow_agent.run_main_process(
+    dialog_flow_agent.run(
             engage=True,
             time_limiter=7200
     )

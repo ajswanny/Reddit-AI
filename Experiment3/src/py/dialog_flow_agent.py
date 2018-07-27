@@ -109,12 +109,7 @@ class DialogFlowAgent:
         return self
 
 
-    def run_main_process(
-            self,
-            time_limiter: int = 0,
-            verbose: bool = False,
-            engage=False
-    ):
+    def run(self, time_limiter: int = 0, verbose: bool = False, engage=False):
         """
 
         :param time_limiter: The limit time for the mainloop (in seconds).

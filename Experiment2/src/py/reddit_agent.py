@@ -112,11 +112,11 @@ class RedditAgent:
             self.data_archive_fp = data_archive_fp
 
         # Initialize dependencies for keyword analysis.
-        self.__init_kpr_metadata__()
+        self.init_kpr_metadata()
 
 
 
-    def __init_kpr_metadata__(self):
+    def init_kpr_metadata(self):
         """
         Initializes all necessary keyword-relative data fields.
         :return:
@@ -137,7 +137,7 @@ class RedditAgent:
         self.ptopic_kpr_bag = list(map(lambda x: x.lower(), self.ptopic_kpr_bag))
 
         # Remove stop words.
-        self.ptopic_kpr_bag = self.__remove_stopwords__(self.ptopic_kpr_bag)
+        self.ptopic_kpr_bag = self.remove_stopwords(self.ptopic_kpr_bag)
 
 
         # Declare the main operation DataFrame.
@@ -210,13 +210,13 @@ class RedditAgent:
 
 
         # Initialize the Agent work process.
-        self.__init_workflow__(method=process_method)
+        self.init_workflow(method=process_method)
 
 
         return self
 
 
-    def __init_workflow__(self, method: str):
+    def init_workflow(self, method: str):
         """
 
         Batch: collect 'hot' Submissions.
@@ -235,7 +235,7 @@ class RedditAgent:
             self.op_datetime_stamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
             # Begin the batch process.
-            self.__run_batch_process__()
+            self.run_batch_process()
 
         elif method == "stream":
 
@@ -246,7 +246,7 @@ class RedditAgent:
         return 0
 
 
-    def __run_batch_process__(self):
+    def run_batch_process(self):
         """
         Begin work using a standard Submission object retrieval using the "hot" listing type.
 
@@ -262,12 +262,12 @@ class RedditAgent:
 
 
         # Calculate average length of Submission title length.
-        self.avg_subm_title_size = self.__calc_avg_subm_title_size__(collection=self.r_submissions)
+        self.avg_subm_title_size = self.calc_avg_subm_title_size(collection=self.r_submissions)
 
 
         # Perform key-phrase-based success response probability analysis, yielding a DataFrame with metadata of
         # respective analyses.
-        self.__analyze_submissions__()
+        self.analyze_submissions()
 
 
         try:
@@ -276,7 +276,7 @@ class RedditAgent:
 
                 # Perform engagement, determining for every Submission if it should be engaged and following through
                 # if so.
-                self.__process_subm_engages__()
+                self.process_subm_engages()
 
 
                 # Redefine 'engage' boolean controller.
@@ -290,13 +290,13 @@ class RedditAgent:
 
             # Archive 'data'.
             if self.archive_data:
-                self.__archive_data__()
+                self.archive_data()
 
 
         return 0
 
 
-    def __analyze_submissions__(self):
+    def analyze_submissions(self):
         """
         A mid-level management method for measurement of Submission engagement success probability.
         The purpose of this method is to allow for the monitoring of the key-phrase-based
@@ -329,12 +329,12 @@ class RedditAgent:
                 if self.analyze_subm_titles:
 
                     # Perform Submission title key-phrase analysis.
-                    analysis.update(self.__analyze_subm_title_kprs__(submission))
+                    analysis.update(self.analyze_subm_title_kprs(submission))
 
                 if self.analyze_subm_articles:
 
                     # Perform Submission Article key-phrase analysis.
-                    analysis.update(self.__analyze_subma_kprs__(submission))
+                    analysis.update(self.analyze_subma_kprs(submission))
 
                 if self.analyze_relevance:
 
@@ -345,7 +345,7 @@ class RedditAgent:
 
                 # Output status.
                 print("Dismissed Submission ", submission.id,
-                      " in '__analyze_submissions__' due to an Indico IO value error.")
+                      " in 'analyze_submissions' due to an Indico IO value error.")
 
                 continue
 
@@ -391,7 +391,7 @@ class RedditAgent:
         }
 
 
-    def __analyze_subma_kprs__(self, submission: reddit.Submission):
+    def analyze_subma_kprs(self, submission: reddit.Submission):
         """
         Performs key-phrase intersection analysis on the ptopic key-phrases and a Submission's linked article.
 
@@ -433,7 +433,7 @@ class RedditAgent:
 
 
     # noinspection PyDictCreation
-    def __analyze_subm_title_kprs__(self, submission: reddit.Submission, track_subm_obj: bool = True):
+    def analyze_subm_title_kprs(self, submission: reddit.Submission, track_subm_obj: bool = True):
         """
         Performs keyword intersection analysis for the topic keyword collection and a given Submission's title.
 
@@ -449,14 +449,14 @@ class RedditAgent:
         # Define the keywords for the given Submission title.
         subm_title_kprs = tuple(indicoio.keywords(submission.title).keys())
         subm_title_kprs = tuple(map(lambda x: x.lower(), subm_title_kprs))
-        subm_title_kprs = self.__remove_stopwords__(subm_title_kprs)
+        subm_title_kprs = self.remove_stopwords(subm_title_kprs)
 
 
         # Define a collection of the words in the Submission title.
         subm_title_tokens = tuple(map(lambda x: x.lower(), submission.title.split()))
 
         # Remove English stopwords from the Submission title token set.
-        subm_title_tokens = self.__remove_stopwords__(corpus=subm_title_tokens)
+        subm_title_tokens = self.remove_stopwords(corpus=subm_title_tokens)
 
         # Define the intersection of the topic key-phrases bag and the Submission's title's content.
         title_intxn = self.intersect(self.ptopic_kpr_bag, subm_title_tokens)
@@ -487,7 +487,7 @@ class RedditAgent:
         return analysis
 
 
-    def __process_subm_engages__(self):
+    def process_subm_engages(self):
         """
         Conducts the engagement actions of the Agent.
 
@@ -504,10 +504,10 @@ class RedditAgent:
         # TODO: DETERMINE IF "row" IS NECESSARY.
         for index, row in self.data.iterrows():
 
-            if self.__clearance__(self.data.loc[index]):
+            if self.clearance(self.data.loc[index]):
 
                 # Generate the utterance message.
-                utterance_message = self.__generate_utterance__(submission_data=self.data.loc[index])
+                utterance_message = self.generate_utterance(submission_data=self.data.loc[index])
 
 
                 # Define container of data for operation of Submission engage.
@@ -549,7 +549,7 @@ class RedditAgent:
         return 0
 
 
-    def __clearance__(self, submission_data: pandas.Series):
+    def clearance(self, submission_data: pandas.Series):
         """
         Determines if the Agent is to engage in a Submission, observing the Submission metadata.
 
@@ -572,7 +572,7 @@ class RedditAgent:
         return False
 
 
-    def __calc_avg_subm_title_size__(self, collection: (list, tuple)):
+    def calc_avg_subm_title_size(self, collection: (list, tuple)):
         """
         Calculates the average word count of the title for each Submission in 'submission_objects'.
 
@@ -598,7 +598,7 @@ class RedditAgent:
 
 
 
-    def __generate_utterance__(self, submission_data: pandas.Series):
+    def generate_utterance(self, submission_data: pandas.Series):
         """
         Generates a message to be submitted to a Reddit Submission.
 
@@ -615,7 +615,7 @@ class RedditAgent:
         return random.choice(self.utterance_sentences)
 
 
-    def __get_reddit_submission__(self, submission_id: str):
+    def get_reddit_submission(self, submission_id: str):
         """
         Returns a Reddit Submission object using a Submission unique ID.
 
@@ -627,9 +627,9 @@ class RedditAgent:
 
 
     @DeprecationWarning
-    def __calc_response_probability__(self, method: str, values: tuple, normalize: bool= True):
+    def calc_response_probability(self, method: str, values: tuple, normalize: bool= True):
         """
-        Calculates the __calc_response_probability__ of success, judging this measure with respect to the intersection
+        Calculates the calc_response_probability of success, judging this measure with respect to the intersection
         of keywords of the base keyword set and a given Submission title's keywords.
 
         At the moment, this measure is obtained simply and naively from the length of the intersection
@@ -642,14 +642,14 @@ class RedditAgent:
 
         if method == "keyword":
 
-            # Initialize a __calc_response_probability__ measure; this tuple index refers to the sum of the amount of
+            # Initialize a calc_response_probability measure; this tuple index refers to the sum of the amount of
             #  values in the intersection list. That is, the amount of keywords that intersected.
             success_probability = values[3]
 
 
             if normalize:
 
-                # Return a __calc_response_probability__ measure normalized to a range of [0, 1].
+                # Return a calc_response_probability measure normalized to a range of [0, 1].
                 # The determined max value is obtained from the amount of ptopic keywords.
                 return self.normalize(success_probability, minimum=0, maximum=79)
 
@@ -659,7 +659,7 @@ class RedditAgent:
 
 
     # noinspection PyCompatibility
-    def __archive_data__(self):
+    def archive_data(self):
         """
         Currently archives field: 'data'.
 
@@ -678,7 +678,7 @@ class RedditAgent:
         return 0
 
 
-    def __remove_stopwords__(self, corpus: (list, tuple)):
+    def remove_stopwords(self, corpus: (list, tuple)):
         """
         Returns the given corpus stripped of English stopwords.
 

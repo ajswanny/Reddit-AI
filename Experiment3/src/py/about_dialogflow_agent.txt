@@ -1,8 +1,0 @@
-Parameters:
-    - Submission
-    - Running-Time
-    - Reddit Account
-    - GCP Project ID
-    - GCP Session ID
-    - GCP Language Code
-    - Topic ( For future )
