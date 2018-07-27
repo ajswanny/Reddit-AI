@@ -34,10 +34,10 @@ def process():
     machine.start(
         work_subreddit='politics',
         engage=False,
-        subm_fetch_limit=5,
+        subm_fetch_limit=1,
         analyze_subm_articles=True,
+        analyze_subm_relevance=True,
         intxn_min_divider=3,
-        analyze_subm_relevance=False,
         process_method="batch",
         archive_data=True
     )
@@ -56,7 +56,7 @@ def main():
     # process()
 
     x: pandas.DataFrame = pandas.read_json(
-        path_or_buf="../resources/dataframes/__pr_h_c__/data/2018-07-26_20-51-31.json")
+        path_or_buf="../resources/dataframes/__pr_h_c__/data/2018-07-26_21-17-22.json")
 
     print(x.to_string())
 

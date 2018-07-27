@@ -41,7 +41,7 @@ class RedditAgent:
                                             #   article for keyword analysis.
     analyze_subm_titles = False             # Indicates if the algorithm is to consider a Submission's title for keyword
                                             #   analysis.
-    analyze_subma_relevance = False          # The boolean controller for analysis of Submission relevance.
+    analyze_relevance = False          # The boolean controller for analysis of Submission relevance.
 
 
     # TODO: Complete compilation of ptopic keywords.
@@ -149,7 +149,6 @@ class RedditAgent:
         self.ptopic_kpr_bag = self.remove_stopwords(self.ptopic_kpr_bag)
 
 
-        # TODO: OPTIMIZE NAMING AND DATAFRAME.
         # Declare the main operation DataFrame.
         self.data = pandas.DataFrame(
             columns=[
@@ -160,6 +159,7 @@ class RedditAgent:
                 'title_intxn',
                 'title_intxn_size',
                 'title_kwds',
+                'title_relevance_score'
                 'subma_relevance_score',
                 'subma_kpr_intxn',
                 'subma_kpr_intxn_size',
@@ -220,7 +220,6 @@ class RedditAgent:
         return list(set(list_x) & set(list_y))
 
 
-
     @staticmethod
     def normalize(value, minimum, maximum):
         """
@@ -238,7 +237,6 @@ class RedditAgent:
         return numerator / denominator
 
 
-
     def __test_functionality__(self):
         """
 
@@ -248,7 +246,6 @@ class RedditAgent:
         print(type(self.data))
 
         return 0
-
 
 
     # noinspection PyAttributeOutsideInit
@@ -286,7 +283,7 @@ class RedditAgent:
         self.analyze_subm_articles = analyze_subm_articles
 
         # Define the boolean controller for analysis of Submission relevance.
-        self.analyze_subma_relevance = analyze_subm_relevance
+        self.analyze_relevance = analyze_subm_relevance
 
         # Define the boolean controller for the archival of 'data'.
         self.archive_data = archive_data
@@ -424,10 +421,10 @@ class RedditAgent:
                     # Perform Submission Article key-phrase analysis.
                     analysis.update(self.__analyze_subma_kprs__(submission))
 
-                if self.analyze_subma_relevance:
+                if self.analyze_relevance:
 
                     # Perform relevance measurement.
-                    analysis["subma_relevance_score"] = self.__analyze_subma_relevance__(submission)
+                    analysis.update(self.__analyze_relevance__(submission))
 
             except IndicoError:
 
@@ -452,7 +449,7 @@ class RedditAgent:
         return self
 
 
-    def __analyze_subma_relevance__(self, submission: reddit.Submission):
+    def __analyze_relevance__(self, submission: reddit.Submission):
         """
         Generates a definition of relevance to the ptopic for a given Submission.
 
@@ -472,12 +469,10 @@ class RedditAgent:
         )
 
 
-        # Convert "Anger" measures to negative values.
-        # relevance_analyses[0][3] = -abs(relevance_analyses[0][3])
-        # relevance_analyses[1][3] = -abs(relevance_analyses[1][3])
-
-
-        return relevance_analyses
+        return {
+            "title_relevance_score": relevance_analyses[0][0],
+            "subma_relevance_score": relevance_analyses[1][0]
+        }
 
 
     def __analyze_subma_kprs__(self, submission: reddit.Submission):
