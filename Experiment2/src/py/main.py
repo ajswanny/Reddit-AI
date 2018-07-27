@@ -33,7 +33,7 @@ def process():
     # Initialize the process.
     machine.start(
         work_subreddit='politics',
-        engage=False,
+        engage=True,
         subm_fetch_limit=1,
         analyze_subm_articles=True,
         analyze_subm_relevance=True,
@@ -56,8 +56,7 @@ def main():
     # process()
 
     x: pandas.DataFrame = pandas.read_json(
-        path_or_buf="../resources/dataframes/__pr_h_c__/data/2018-07-26_21-17-22.json")
-
+        path_or_buf="../resources/dataframes/__pr_h_c__/data/2018-07-26_21-57-59.json")
     print(x.to_string())
 
 

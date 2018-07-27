@@ -69,7 +69,7 @@ class RedditAgent:
     avg_subm_title_size = 0
 
     # The minimum keyword intersection magnitude.
-    kwd_intxn_min = 0
+    kpr_intxn_min = 0
 
     # The divider for determination of minimum keyword intersection magnitude.
     intersection_min_divider = 0
@@ -156,16 +156,15 @@ class RedditAgent:
                 'subm_id',
                 'comment_count',
                 'title',
-                'title_intxn',
-                'title_intxn_size',
-                'title_kwds',
-                'title_relevance_score'
+                'title_kpr_intxn',
+                'title_kpr_intxn_size',
+                'title_kprs',
+                'title_relevance_score',
                 'subma_relevance_score',
                 'subma_kpr_intxn',
                 'subma_kpr_intxn_size',
                 'subma_kprs',
                 'subma_url',
-                'success_probability',
                 'utterance_content'
             ]
         )
@@ -293,7 +292,7 @@ class RedditAgent:
 
 
         # Initialize the Agent work process.
-        self.__init_workflow__(method= process_method)
+        self.__init_workflow__(method=process_method)
 
 
         return self
@@ -341,8 +340,8 @@ class RedditAgent:
         # Subreddit for the InputLobe instance, which is defined by the 'work_subreddit' parameter for the call to
         # '__init_operation_lobes__' method.
         self.r_submissions = self.reddit_op_handler.__collect_submissions__(
-            return_objects= True,
-            fetch_limit= self.subm_fetch_limit
+            return_objects=True,
+            fetch_limit=self.subm_fetch_limit
         )
 
 
@@ -367,9 +366,9 @@ class RedditAgent:
                 # Redefine 'engage' boolean controller.
                 self.engage = False
 
-        except praw.exceptions.APIException as E:
+        except praw.exceptions.APIException as e:
 
-            print("Encountered: ", E.message)
+            print("Encountered: ", e.message)
 
         finally:
 
@@ -487,18 +486,17 @@ class RedditAgent:
         subm_url = submission.url
 
 
-        # Generate keyword analysis for the AURL.
+        # Generate keyword analysis for the SUBMA.
         subma_kpr_analysis = indicoio.keywords(subm_url)
 
-        # Retrieve the exclusively the keywords identified for the AURL.
+        # Retrieve key-phrases identified for the SUBMA.
         subma_kprs = tuple(subma_kpr_analysis.keys())
-
 
         # Normalize all keywords to be lowercase.
         subma_kprs = tuple(map(lambda x: x.lower(), subma_kprs))
 
 
-        # Define the intersection of the ptopic keywords and the AURL.
+        # Define the intersection of the problem topic key-phrases and the SUBMA.
         subma_intxn = self.intersect(self.ptopic_kpr_bag, subma_kprs)
 
 
@@ -557,19 +555,10 @@ class RedditAgent:
         analysis = {
             "subm_id": submission.id,
             "title": submission.title,
-            "title_intxn": title_intxn,
-            "title_intxn_size": float(keywords_intersections_count),
+            "title_kpr_intxn": title_intxn,
+            "title_kpr_intxn_size": float(keywords_intersections_count),
             "title_kprs": subm_title_kprs
         }
-
-
-        # Define a calc_response_probability measure of success and append this to the 'analysis' dictionary.
-        # This figure is used to determine whether or not the Agent will submit a textual expression
-        # to a Reddit Submission.
-        # TODO: OPTIMIZE.
-        analysis["success_probability"] = \
-            self.calc_response_probability(method="keyword", values=tuple(analysis.values()))
-
 
 
         if track_subm_obj:
@@ -594,7 +583,8 @@ class RedditAgent:
         # TODO: DEFINE THE OFFICIAL METRIC FOR THIS FIELD.
         # Define the minimum intersection size.
         # self.intersection_min = int(self.avg_subm_title_size / self.intersection_min_divider)
-        self.kwd_intxn_min = 3
+        # $DEVELOPMENT
+        self.kpr_intxn_min = 3
 
 
         # TODO: DETERMINE IF "row" IS NECESSARY.
@@ -636,6 +626,11 @@ class RedditAgent:
                     # Output error details and delay operation.
                     print("Caught error: ", e.message, "...Dismissing Submission: ", self.data.at[index, "subm_id"])
 
+            else:
+
+                # Archive the utterance message content.
+                self.data.at[index, "utterance_content"] = "UNDEFINED"
+
 
         return 0
 
@@ -645,27 +640,23 @@ class RedditAgent:
         """
         Determines if the Agent is to engage in a Submission, observing the Submission metadata.
 
-        # TODO: Substantial optimization.
-
         :return:
         """
 
-        # Initialize a clearance determination.
-        clearance = False
-
-
+        # TODO: DETERMINE OFFICIAL MEASUREMENT.
         # Determine clearance status. Clearance evaluates as true if the magnitude of one of the intersections is
         # greater than or equal to 'intersection_min' or if the calculated Submission Article relevance score.
-        if (submission_data.intersection_size or submission_data.aurl_kwd_intxn_size) >= self.kwd_intxn_min:
+        if (submission_data.title_kpr_intxn_size or submission_data.subma_kpr_intxn_size) >= self.kpr_intxn_min:
 
-            clearance = True
+            return True
 
-        elif sum(submission_data.subm_relevance_score) > 5:
+        # TODO: DETERMINE OFFICIAL MEASUREMENT.
+        elif (submission_data.title_relevance_score or submission_data.subma_relevance_score) > 0.65:
 
-            clearance = True
+            return True
 
 
-        return clearance
+        return False
 
 
 
