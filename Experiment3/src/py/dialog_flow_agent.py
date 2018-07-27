@@ -6,7 +6,9 @@ alexjosephswanson@gmail.com
 The script for the Reddit AI agent that implements DialogFlow.
 """
 
+# Must be imported in order to authenticate GCP functionality.
 from Experiment3.src.auth import GCPAuthentication
+
 from google.api_core.exceptions import InvalidArgument
 from praw.exceptions import APIException
 import dialogflow
