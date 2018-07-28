@@ -34,7 +34,7 @@ def process():
     machine.start(
         work_subreddit='politics',
         engage=True,
-        subm_fetch_limit=1,
+        subm_fetch_limit=5,
         analyze_subm_articles=True,
         analyze_subm_relevance=True,
         intxn_min_divider=3,
@@ -60,4 +60,4 @@ def main():
     print(x.to_string())
 
 
-main()
+process()

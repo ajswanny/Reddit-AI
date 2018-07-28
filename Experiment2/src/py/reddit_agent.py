@@ -8,6 +8,8 @@ The script for initialization and operation of a Reddit AI agent.
 
 
 # Import custom modules.
+import csv
+
 from .reddit_op_handler import RedditOpHandler
 
 # Import third-party modules.
@@ -111,6 +113,21 @@ class RedditAgent:
 
             self.data_archive_fp = data_archive_fp
 
+        # Initialize the list of already-engaged Submissions.
+        try:
+
+            with open("../resources/reddit/engaged_subm_ids.csv") as file:
+
+                # Define the file iterator.
+                reader = csv.reader(file)
+
+                # Obtain the desired list from the iterator, removing any undesirable input.
+                self.engaged_subm_ids = [element for element in list(reader)[0] if element is not '']
+
+        except FileNotFoundError:
+
+            print("File 'engaged_subm_ids.csv' not found.")
+
         # Initialize dependencies for keyword analysis.
         self.init_kpr_metadata()
 
@@ -125,9 +142,9 @@ class RedditAgent:
         # Define the collection of key-phrases and their salience.
         # TODO: CURRENTLY USING ONLY THE FIRST COLLECTION OF PROBLEM TOPIC KEYWORDS; STILL COMPILING FULL COLLECTION.
         # TODO: REMOVE ABSOLUTE PATHING.
-        with open("../resources/problem_topics/__pr_h_c__/problem_topic_kwds/problem_topic_kwds.json", 'r') as fp:
+        with open("../resources/problem_topics/__pr_h_c__/problem_topic_kwds/problem_topic_kwds.json", 'r') as file:
 
-            self.ptopic_key_phrases = pandas.Series(json.load(fp))
+            self.ptopic_key_phrases = pandas.Series(json.load(file))
 
 
         # Define the bag of key-phrases for the problem topic.
@@ -290,7 +307,7 @@ class RedditAgent:
 
             # Archive 'data'.
             if self.archive_data:
-                self.archive_data()
+                self.__archive_data__()
 
 
         return 0
@@ -494,14 +511,7 @@ class RedditAgent:
         :return:
         """
 
-        # TODO: DEFINE THE OFFICIAL METRIC FOR THIS FIELD.
-        # Define the minimum intersection size.
-        # self.intersection_min = int(self.avg_subm_title_size / self.intersection_min_divider)
-        # $DEVELOPMENT
-        self.kpr_intxn_min = 3
-
-
-        # TODO: DETERMINE IF "row" IS NECESSARY.
+        # Note: "row" necessary; causes error if exempted.
         for index, row in self.data.iterrows():
 
             if self.clearance(self.data.loc[index]):
@@ -511,7 +521,7 @@ class RedditAgent:
 
 
                 # Define container of data for operation of Submission engage.
-                operation_fields = (self.data.submission_object[index], utterance_message)
+                operation_fields = (self.data.subm_object[index], utterance_message)
 
 
                 # Archive the utterance message content.
@@ -520,20 +530,27 @@ class RedditAgent:
 
                 try:
 
-                    print("Delaying process for 10 minutes to avoid 'excessive posting' error. Waiting...")
-                    # Delay process to avoid encountering an "excessive posting" error from the Reddit API.
-                    time.sleep(600)
-                    print("...Done")
-
-                    # Create and deliver a message for the respective Submission providing the Submission object as the
-                    # actionable Submission and the utterance to be used.
-                    self.reddit_op_handler.__create_comment__(
-                        actionable_submission=operation_fields[0],
-                        utterance_content=operation_fields[1]
-                    )
+                    # print("Delaying process for 10 minutes to avoid 'excessive posting' error. Waiting...")
+                    # # Delay process to avoid encountering an "excessive posting" error from the Reddit API.
+                    # time.sleep(600)
+                    # print("...Done")
+                    #
+                    # # Create and deliver a message for the respective Submission providing the Submission object as the
+                    # # actionable Submission and the utterance to be used.
+                    # self.reddit_op_handler.__create_comment__(
+                    #     actionable_submission=operation_fields[0],
+                    #     utterance_content=operation_fields[1]
+                    # )
 
                     # Record the engagement time.
                     self.data.at[index, "engagement_time"] = str(datetime.now())
+
+                    # Record the engaged Submission's ID.
+                    with open("../resources/reddit/engaged_subm_ids.csv", "a") as file:
+
+                        # Perform output.
+                        file.write(self.data.at[index, "subm_id"] + ",")
+
 
                 except praw.exceptions.APIException as e:
 
@@ -547,29 +564,6 @@ class RedditAgent:
 
 
         return 0
-
-
-    def clearance(self, submission_data: pandas.Series):
-        """
-        Determines if the Agent is to engage in a Submission, observing the Submission metadata.
-
-        :return:
-        """
-
-        # TODO: DETERMINE OFFICIAL MEASUREMENT.
-        # Determine clearance status. Clearance evaluates as true if the magnitude of one of the intersections is
-        # greater than or equal to 'intersection_min' or if the calculated Submission Article relevance score.
-        if (submission_data.title_kpr_intxn_size or submission_data.subma_kpr_intxn_size) >= self.kpr_intxn_min:
-
-            return True
-
-        # TODO: DETERMINE OFFICIAL MEASUREMENT.
-        elif (submission_data.title_relevance_score or submission_data.subma_relevance_score) > 0.65:
-
-            return True
-
-
-        return False
 
 
     def calc_avg_subm_title_size(self, collection: (list, tuple)):
@@ -659,7 +653,7 @@ class RedditAgent:
 
 
     # noinspection PyCompatibility
-    def archive_data(self):
+    def __archive_data__(self):
         """
         Currently archives field: 'data'.
 
@@ -687,6 +681,28 @@ class RedditAgent:
         """
 
         return [word for word in corpus if word not in self.stop_words]
+
+
+    def clearance(self, submission_data: pandas.Series):
+        """
+        Determines if the Agent is to engage in a Submission, observing the Submission metadata.
+
+        :return:
+        """
+
+        # Determine if the sum of the relevance scores of the Submission title and linked article are above a desired
+        # threshold.
+        if (submission_data.title_relevance_score + submission_data.subma_relevance_score) > 0.65 and \
+                (submission_data.subm_id not in self.engaged_subm_ids):
+
+            return True
+
+        else:
+
+            # Output status.
+            print("Submission " + submission_data.subm_id + " not granted clearance. It has already been engaged.")
+
+        return False
 
 
     @staticmethod
