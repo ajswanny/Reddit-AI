@@ -1,2 +1,0 @@
-This resource: the collection of English stopwords, obtained from the NLTK's (Natural Language Tool-Kit) stopword collection.
-
