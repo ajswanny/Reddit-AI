@@ -145,10 +145,11 @@ class RedditAgent:
         :return:
         """
 
-        # Define the collection of key-phrases and their salience.
-        # TODO: CURRENTLY USING ONLY THE FIRST COLLECTION OF PROBLEM TOPIC KEYWORDS; STILL COMPILING FULL COLLECTION.
-        # TODO: REMOVE ABSOLUTE PATHING.
-        with open("../resources/problem_topics/__pr_h_c__/problem_topic_kwds/problem_topic_kwds.json", 'r') as file:
+        # Define the FP for the problem topic key-phrases.
+        pt_kprs_fp = "../resources/problem_topics/" + self.problem_topic_id + "/problem_topic_kprs.json"
+
+        # Load the key-phrases for the problem topic.
+        with open(pt_kprs_fp, 'r') as file:
 
             self.ptopic_key_phrases = pandas.Series(json.load(file))
 

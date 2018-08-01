@@ -4,6 +4,7 @@ Copyright (c) 2018, Alexander Joseph Swanson Villares
 alexjosephswanson@gmail.com
 """
 
+
 import pandas
 from Experiment2.src.py.reddit_agent import RedditAgent
 
@@ -39,7 +40,7 @@ def process__pr_h_c__():
     )
 
 
-def process__j_g_controversy__():
+def process__j_g_c__():
 
     # Define the credentials for the Reddit object.
     reddit_parameters = (
@@ -50,10 +51,24 @@ def process__j_g_controversy__():
         "subreddit.stream.agent.1.password"
     )
 
+    # Define the MachineLobe with the desired Reddit credentials.
+    machine = RedditAgent(
+        reddit_params=reddit_parameters,
+        problem_topic_id="__j_g_c__",
+        utterance_sentences_fp="../resources/utterances/__j_g_c__/utterance_sentences.txt"
+    )
 
-def process__():
-
-    print("")
+    # Initialize the process.
+    machine.start(
+        work_subreddit='politics',
+        engage=False,
+        subm_fetch_limit=5,
+        analyze_subm_articles=True,
+        analyze_subm_relevance=True,
+        process_method="batch",
+        relevance_threshold=0.65,
+        archive_data=True
+    )
 
 
 def main():
