@@ -69,15 +69,18 @@ class RedditAgent:
     # The divider for determination of minimum keyword intersection magnitude.
     intersection_min_divider = 0
 
-    # The tuple of sentences to be used for expression utterance.
-    utterance_sentences = tuple(open("../resources/utterances/utterance_sentences_one.txt").read().splitlines())
-
     # The authentication for the Indico NLP API.
     indicoio.config.api_key = '43c624474f147b8b777a144807e7ca95'
 
 
-    def __init__(self, reddit_params: tuple, problem_topic_id: str, data_archive_fp = None,
-                 task: str = "Keyword Analysis and Expression"):
+    def __init__(
+            self,
+            reddit_params: tuple,
+            problem_topic_id: str,
+            utterance_sentences_fp: str,
+            data_archive_fp = None,
+            task: str = "Keyword Analysis and Expression",
+    ):
         """
 
         :param reddit_params:
@@ -103,6 +106,9 @@ class RedditAgent:
 
         # Define the problem topic ID.
         self.problem_topic_id = problem_topic_id
+
+        # The tuple of sentences to be used for expression utterance.
+        self.utterance_sentences = tuple(open(utterance_sentences_fp).read().splitlines())
 
         # Define location of the JSON file to archive 'data'.
         if data_archive_fp is None:
@@ -182,17 +188,26 @@ class RedditAgent:
 
 
     # noinspection PyAttributeOutsideInit
-    def start(self, work_subreddit: str, engage: bool, intxn_min_divider: int, process_method: str,
-              subm_fetch_limit: (int, None), analyze_subm_articles: bool, archive_data: bool = True,
-              analyze_subm_titles: bool= True, analyze_subm_relevance: bool = False):
+    def start(
+            self,
+            work_subreddit: str,
+            engage: bool,
+            process_method: str,
+            subm_fetch_limit: (int, None),
+            analyze_subm_articles: bool,
+            relevance_threshold: float,
+            archive_data: bool = True,
+            analyze_subm_titles: bool= True,
+            analyze_subm_relevance: bool = False
+    ):
         """
 
+        :param relevance_threshold:
         :param archive_data:
         :param analyze_subm_relevance:
         :param analyze_subm_titles:
         :param analyze_subm_articles:
         :param engage:
-        :param intxn_min_divider:
         :param process_method:
         :param subm_fetch_limit: The amount of Submissions to fetch from the work Subreddit.
         :param work_subreddit:
@@ -204,8 +219,8 @@ class RedditAgent:
             self.engage = True
 
 
-        # Define divider for specified key-phrase-intersection minimum.
-        self.intersection_min_divider = intxn_min_divider
+        # Define the Submission title and SUBMA relevance threshold.
+        self.relevance_threshold = relevance_threshold
 
         # Define the Submission collection limit.
         self.subm_fetch_limit = subm_fetch_limit
@@ -294,7 +309,6 @@ class RedditAgent:
                 # Perform engagement, determining for every Submission if it should be engaged and following through
                 # if so.
                 self.process_subm_engages()
-
 
                 # Redefine 'engage' boolean controller.
                 self.engage = False
@@ -514,7 +528,7 @@ class RedditAgent:
         # Note: "row" necessary; causes error if exempted.
         for index, row in self.data.iterrows():
 
-            if self.clearance(self.data.loc[index]):
+            if self.engagement_clearance(self.data.loc[index]):
 
                 # Generate the utterance message.
                 utterance_message = self.generate_utterance(submission_data=self.data.loc[index])
@@ -530,17 +544,17 @@ class RedditAgent:
 
                 try:
 
-                    # print("Delaying process for 10 minutes to avoid 'excessive posting' error. Waiting...")
-                    # # Delay process to avoid encountering an "excessive posting" error from the Reddit API.
-                    # time.sleep(600)
-                    # print("...Done")
-                    #
-                    # # Create and deliver a message for the respective Submission providing the Submission object as the
-                    # # actionable Submission and the utterance to be used.
-                    # self.reddit_op_handler.__create_comment__(
-                    #     actionable_submission=operation_fields[0],
-                    #     utterance_content=operation_fields[1]
-                    # )
+                    print("Delaying process for 10 minutes to avoid 'excessive posting' error. Waiting...")
+                    # Delay process to avoid encountering an "excessive posting" error from the Reddit API.
+                    time.sleep(600)
+                    print("...Done")
+
+                    # Create and deliver a message for the respective Submission providing the Submission object as the
+                    # actionable Submission and the utterance to be used.
+                    self.reddit_op_handler.__create_comment__(
+                        actionable_submission=operation_fields[0],
+                        utterance_content=operation_fields[1]
+                    )
 
                     # Record the engagement time.
                     self.data.at[index, "engagement_time"] = str(datetime.now())
@@ -620,42 +634,10 @@ class RedditAgent:
         return self.reddit_instance.submission(id=submission_id)
 
 
-    @DeprecationWarning
-    def calc_response_probability(self, method: str, values: tuple, normalize: bool= True):
-        """
-        Calculates the calc_response_probability of success, judging this measure with respect to the intersection
-        of keywords of the base keyword set and a given Submission title's keywords.
-
-        At the moment, this measure is obtained simply and naively from the length of the intersection
-        of the base keyword set and a given Submission title's keyword set.
-
-        # TODO: Substantial optimization.
-
-        :return:
-        """
-
-        if method == "keyword":
-
-            # Initialize a calc_response_probability measure; this tuple index refers to the sum of the amount of
-            #  values in the intersection list. That is, the amount of keywords that intersected.
-            success_probability = values[3]
-
-
-            if normalize:
-
-                # Return a calc_response_probability measure normalized to a range of [0, 1].
-                # The determined max value is obtained from the amount of ptopic keywords.
-                return self.normalize(success_probability, minimum=0, maximum=79)
-
-            else:
-
-                return success_probability
-
-
     # noinspection PyCompatibility
     def __archive_data__(self):
         """
-        Currently archives field: 'data'.
+        Currently archives DataFrame: 'data'.
 
         :return:
         """
@@ -683,7 +665,7 @@ class RedditAgent:
         return [word for word in corpus if word not in self.stop_words]
 
 
-    def clearance(self, submission_data: pandas.Series):
+    def engagement_clearance(self, submission_data: pandas.Series):
         """
         Determines if the Agent is to engage in a Submission, observing the Submission metadata.
 
@@ -692,15 +674,16 @@ class RedditAgent:
 
         # Determine if the sum of the relevance scores of the Submission title and linked article are above a desired
         # threshold.
-        if (submission_data.title_relevance_score + submission_data.subma_relevance_score) > 0.65 and \
-                (submission_data.subm_id not in self.engaged_subm_ids):
+        if (submission_data.title_relevance_score + submission_data.subma_relevance_score) > self.relevance_threshold \
+                and (submission_data.subm_id not in self.engaged_subm_ids):
 
             return True
 
         else:
 
             # Output status.
-            print("Submission " + submission_data.subm_id + " not granted clearance. It has already been engaged.")
+            print("Submission " + submission_data.subm_id +
+                  " not granted engagement_clearance. It has already been engaged.")
 
         return False
 

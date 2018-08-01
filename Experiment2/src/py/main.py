@@ -5,7 +5,7 @@ alexjosephswanson@gmail.com
 """
 
 
-from Experiment2.src.py.reddit_agent import RedditAgent
+from Experiments.Experiment2.src.py.reddit_agent import RedditAgent
 
 from pprint import pprint
 import pandas
@@ -27,7 +27,8 @@ def process():
     # Define the MachineLobe with the desired Reddit credentials.
     machine = RedditAgent(
         reddit_params=reddit_parameters,
-        problem_topic_id="__pr_h_c__"
+        problem_topic_id="__pr_h_c__",
+        utterance_sentences_fp="../resources/utterances/__pr_h_c__/utterance_sentences.txt"
     )
 
     # Initialize the process.
