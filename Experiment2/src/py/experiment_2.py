@@ -1,5 +1,5 @@
 """
-Created by Alexander Swanson on 6/31/18.
+Created by Alexander Swanson on 7/31/18.
 Copyright (c) 2018, Alexander Joseph Swanson Villares
 alexjosephswanson@gmail.com
 """
@@ -67,13 +67,14 @@ def process__j_g_c__():
         analyze_subm_relevance=True,
         process_method="batch",
         relevance_threshold=0.65,
-        archive_data=True
+        archive_data=False
     )
 
 
 def main():
 
     # process__pr_h_c__()
+    process__j_g_c__()
 
     x: pandas.DataFrame = pandas.read_json(
         path_or_buf="../resources/dataframes/__pr_h_c__/data/2018-07-31_22-58-43.json")

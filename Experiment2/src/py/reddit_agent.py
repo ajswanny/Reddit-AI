@@ -108,6 +108,8 @@ class RedditAgent:
         self.problem_topic_id = problem_topic_id
 
         # The tuple of sentences to be used for expression utterance.
+        utterance_sentences_fp = \
+            "../resources/problem_topics/" + self.problem_topic_id + "/utterances/utterance_sentences.txt"
         self.utterance_sentences = tuple(open(utterance_sentences_fp).read().splitlines())
 
         # Define location of the JSON file to archive 'data'.
@@ -146,7 +148,8 @@ class RedditAgent:
         """
 
         # Define the FP for the problem topic key-phrases.
-        pt_kprs_fp = "../resources/problem_topics/" + self.problem_topic_id + "/problem_topic_kprs.json"
+        pt_kprs_fp = \
+            "../resources/problem_topics/" + self.problem_topic_id + "/problem_topic_kprs/problem_topic_kprs.json"
 
         # Load the key-phrases for the problem topic.
         with open(pt_kprs_fp, 'r') as file:
