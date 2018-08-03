@@ -77,8 +77,7 @@ class RedditAgent:
             self,
             reddit_params: tuple,
             problem_topic_id: str,
-            utterance_sentences_fp: str,
-            data_archive_fp = None,
+            data_archive_fp=None,
             task: str = "Keyword Analysis and Expression",
     ):
         """
@@ -289,10 +288,10 @@ class RedditAgent:
         :return:
         """
 
-        # Command collection of Submission objects. Note: the '__collect_submissions__' method operates on the default
+        # Command collection of Submission objects. Note: the 'collect_submissions' method operates on the default
         # Subreddit for the InputLobe instance, which is defined by the 'work_subreddit' parameter for the call to
         # '__init_operation_lobes__' method.
-        self.r_submissions = self.reddit_op_handler.__collect_submissions__(
+        self.r_submissions = self.reddit_op_handler.collect_submissions(
             fetch_limit=self.subm_fetch_limit
         )
 
@@ -555,7 +554,7 @@ class RedditAgent:
 
                     # Create and deliver a message for the respective Submission providing the Submission object as the
                     # actionable Submission and the utterance to be used.
-                    self.reddit_op_handler.__create_comment__(
+                    self.reddit_op_handler.create_comment(
                         actionable_submission=operation_fields[0],
                         utterance_content=operation_fields[1]
                     )
@@ -651,7 +650,7 @@ class RedditAgent:
 
         # Generate the archive FP.
         self.data_archive_fp = \
-            "../resources/dataframes/" + str(self.problem_topic_id) + "/data/" + self.op_datetime_stamp + ".json"
+            "../resources/dataframes/" + self.problem_topic_id + "/data/" + self.op_datetime_stamp + ".json"
 
         t.to_json(path_or_buf=self.data_archive_fp)
 

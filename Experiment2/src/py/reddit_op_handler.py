@@ -40,7 +40,7 @@ class RedditOpHandler:
             self.default_subreddit = self.reddit_instance.subreddit("news")
 
 
-    def __collect_submissions__(self, listing_type: str = None, fetch_limit=None):
+    def collect_submissions(self, listing_type: str = None, fetch_limit=None):
         """
 
         :param listing_type:
@@ -72,7 +72,7 @@ class RedditOpHandler:
         return submissions
 
 
-    def __create_comment__(self, actionable_submission: reddit.Submission, utterance_content: str):
+    def create_comment(self, actionable_submission: reddit.Submission, utterance_content: str):
         """
         A high-level management function to oversee expression utterance for Reddit Submissions.
 

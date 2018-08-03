@@ -24,7 +24,6 @@ def process__pr_h_c__():
     machine = RedditAgent(
         reddit_params=reddit_parameters,
         problem_topic_id="__pr_h_c__",
-        utterance_sentences_fp="../resources/utterances/__pr_h_c__/utterance_sentences.txt"
     )
 
     # Initialize the process.
@@ -55,7 +54,6 @@ def process__j_g_c__():
     machine = RedditAgent(
         reddit_params=reddit_parameters,
         problem_topic_id="__j_g_c__",
-        utterance_sentences_fp="../resources/utterances/__j_g_c__/utterance_sentences.txt"
     )
 
     # Initialize the process.
@@ -73,12 +71,14 @@ def process__j_g_c__():
 
 def main():
 
-    # process__pr_h_c__()
-    process__j_g_c__()
+    # Output status.
+    print("Starting main().")
 
-    x: pandas.DataFrame = pandas.read_json(
-        path_or_buf="../resources/dataframes/__pr_h_c__/data/2018-07-31_22-58-43.json")
-    print(x.to_string())
+    # process__pr_h_c__()
+    # process__j_g_c__()
+
+    # x: pandas.DataFrame = pandas.read_json(
+    #     path_or_buf="../resources/dataframes/__pr_h_c__/data/2018-07-31_22-58-43.json")
 
 
 main()
