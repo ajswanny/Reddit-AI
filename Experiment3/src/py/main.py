@@ -24,7 +24,7 @@ def main(submission_id: str):
     # Define a DialogFlow agent for the provided Submission.
     dialog_flow_agent = DialogFlowAgent(
             reddit_parameters=reddit_parameters_1,
-            submission=submission_id,
+            submission_id=submission_id,
     )
 
 
@@ -35,8 +35,6 @@ def main(submission_id: str):
     )
 
 
-# # Run 'main'.
-# if __name__ == "__main__":
-#     main(submission_id="8gm3un")
-
-print(time.time())
+# Run 'main'.
+if __name__ == "__main__":
+    main(submission_id="8gm3un")

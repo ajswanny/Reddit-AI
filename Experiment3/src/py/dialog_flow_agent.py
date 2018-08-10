@@ -6,8 +6,8 @@ alexjosephswanson@gmail.com
 The script for the Reddit AI agent that implements DialogFlow.
 """
 
-# Must be imported in order to authenticate GCP functionality.
-from Experiment3.src.auth import GCPAuthentication
+# This imported in order to authenticate GCP functionality.
+# from Experiment3.src.auth.__j_g_c__ import gcp_authentication
 
 from google.api_core.exceptions import InvalidArgument
 from praw.exceptions import APIException
@@ -19,19 +19,19 @@ import google
 
 class DialogFlowAgent:
 
-
+    ## Constructor.
     def __init__(
             self,
             reddit_parameters: tuple,
-            submission: str,
-            gcp_project_id: str = "cs-196",
+            submission_id: str,
+            gcp_project_id: str,
             gcp_session_id: str = "dialogflow_reddit_moderation_agent",
             gcp_language_code: str = "en",
     ):
         """
 
         :param reddit_parameters:
-        :param submission:
+        :param submission_id:
         :param gcp_project_id: Must be static! The Project ID, respective to the project on the GCP.
         :param gcp_session_id: Can be modified. This field provides a description for the current session.
         :param gcp_language_code:
@@ -48,7 +48,7 @@ class DialogFlowAgent:
 
 
         # Define the Subreddit for work.
-        self.submission = self.reddit_instance.submission(id= submission)
+        self.submission = self.reddit_instance.submission(id=submission_id)
 
 
         # Define Google Cloud Platform (GCP) Parameters.
@@ -140,7 +140,6 @@ class DialogFlowAgent:
             self.submission.comments.replace_more(limit=0)
             submission_comments = self.submission.comments.list()
 
-
             # Consider every Comment for a response.
             for comment in submission_comments:
 
@@ -156,7 +155,7 @@ class DialogFlowAgent:
                         print(
                             "Encountered Comment of insufficient context length.",
                             "Adding Comment to 'engaged_comments' and continuing process.",
-                            "\n"
+                            "\n", "-" * 20, "\n\n"
                         )
 
                         # Archive Comment object to 'engaged_comments'.
@@ -170,7 +169,7 @@ class DialogFlowAgent:
                         print(
                             "Encountered Comment which has already been processed.",
                             "Continuing process.",
-                            "\n"
+                            "\n", "-" * 20, "\n\n"
                         )
 
                         continue
@@ -221,7 +220,7 @@ class DialogFlowAgent:
                             # Output status: account for prevention of repeated response.
                             print(
                                 "Received repeated Comment response. Continuing without action. \n",
-                                "Beginning process stall for 5 minutes."
+                                "Beginning process stall for 5 minutes.", "\n", "-" * 20, "\n\n"
                             )
 
                             # Archive comment to 'engaged_comments'.
@@ -288,7 +287,6 @@ class DialogFlowAgent:
 
                     # Redefine the GCP parameters.
                     self.define_gcp_parameters()
-
 
             # After end of loop, check if the time since the beginning of the process surpasses the given limit.
             if time.time() > time_limit:
