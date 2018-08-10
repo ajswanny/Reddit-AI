@@ -15,7 +15,7 @@ def process__pr_h_c__():
     reddit_parameters = (
         "zO1z52xZNtdxrA",
         "VbAzyOfUcj-94a71j8V_6lUTyAM",
-        "An observer of Subreddit Streams",
+        "An observer of Subreddit Streams for Alexander Swanson in Experiment: Reddit AI",
         "ssa1G",
         "subreddit.stream.agent.1.password"
     )
@@ -28,7 +28,7 @@ def process__pr_h_c__():
 
     # Initialize the process.
     machine.start(
-        work_subreddit='politics',
+        work_subreddit='news',
         engage=False,
         subm_fetch_limit=5,
         analyze_subm_articles=True,
@@ -43,10 +43,10 @@ def process__j_g_c__():
 
     # Define the credentials for the Reddit object.
     reddit_parameters = (
-        "zO1z52xZNtdxrA",
-        "VbAzyOfUcj-94a71j8V_6lUTyAM",
-        "An observer of Subreddit Streams",
-        "ssa1G",
+        "B2ftBocL0DSYKQ",
+        "bD_wgy8GWlQJ6koXUwqP0IjzZao",
+        "An observer of Subreddit Streams for Alexander Swanson in Experiment: Reddit AI",
+        "ssa2G",
         "subreddit.stream.agent.1.password"
     )
 
@@ -58,7 +58,7 @@ def process__j_g_c__():
 
     # Initialize the process.
     machine.start(
-        work_subreddit='politics',
+        work_subreddit='news',
         engage=False,
         subm_fetch_limit=5,
         analyze_subm_articles=True,
@@ -74,8 +74,9 @@ def main():
     # Output status.
     print("Starting main().")
 
-    # process__pr_h_c__()
-    # process__j_g_c__()
+    # Run the experiments.
+    process__pr_h_c__()
+    process__j_g_c__()
 
     # x: pandas.DataFrame = pandas.read_json(
     #     path_or_buf="../resources/dataframes/__pr_h_c__/data/2018-07-31_22-58-43.json")
