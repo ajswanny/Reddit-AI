@@ -40,7 +40,7 @@ def process():
         analyze_subm_relevance=True,
         intxn_min_divider=3,
         process_method="batch",
-        archive_data=True
+        record_data=True
     )
 
 

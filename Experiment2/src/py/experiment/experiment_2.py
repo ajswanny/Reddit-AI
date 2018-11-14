@@ -35,7 +35,7 @@ def process__pr_h_c__():
         analyze_subm_relevance=True,
         process_method="batch",
         relevance_threshold=0.65,
-        archive_data=True
+        record_data=True
     )
 
 
@@ -65,7 +65,7 @@ def process__j_g_c__():
         analyze_subm_relevance=True,
         process_method="batch",
         relevance_threshold=0.65,
-        archive_data=False
+        record_data=False
     )
 
 
