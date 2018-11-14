@@ -24,6 +24,7 @@ def process__pr_h_c__():
     machine = RedditAgent(
         reddit_params=reddit_parameters,
         problem_topic_id="__pr_h_c__",
+        problem_topic_title="Puerto Rico Humanitarian Crisis"
     )
 
     # Initialize the process.
@@ -54,6 +55,7 @@ def process__j_g_c__():
     machine = RedditAgent(
         reddit_params=reddit_parameters,
         problem_topic_id="__j_g_c__",
+        problem_topic_title="James Gunn Controversy"
     )
 
     # Initialize the process.

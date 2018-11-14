@@ -109,11 +109,11 @@ class RedditAgent:
 
         :param reddit_params: The values necessary to create access to the Reddit API and Reddit data. The 5-tuple
         structure must always be provided in the order:
-            client_id
-            client_secret
-            user_agent
-            username
-            password
+            1. client_id
+            2. client_secret
+            3. user_agent
+            4. username
+            5. password
         :param problem_topic_id: The short ID of the problem-topic.
         :param problem_topic_title: The Title of the problem-topic.
         :param data_fp: The file-path for the main DataFrame.
