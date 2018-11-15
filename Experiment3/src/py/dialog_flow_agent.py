@@ -114,7 +114,7 @@ class DialogFlowAgent:
 
         :param process_time_limit: The limit time for the mainloop (in seconds).
         :param engage: Boolean controller for whether or not to submit generated replies to Comments.
-        :return:
+        :return: 0 indicating a process exit.
         """
 
         # Define the list of all Comments that have been engaged.
@@ -221,7 +221,7 @@ class DialogFlowAgent:
                     print("Encountered keyboard interrupt; terminating process.")
 
                     # End process.
-                    return self
+                    return 0
 
                 finally:
 
