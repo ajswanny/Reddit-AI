@@ -153,8 +153,7 @@ class DialogFlowAgent:
 
                         print(
                             "Encountered Comment of insufficient context length. Adding Comment to 'engaged_comments' "
-                            "and continuing process.",
-                            "\n", "-" * 20
+                            "and continuing process.\n", "-" * 20
                         )
 
                         # Add Comment object to 'engaged_comments'.
@@ -164,11 +163,7 @@ class DialogFlowAgent:
                     # Ignore Comment if it has already been processed.
                     elif comment in engaged_comments:
 
-                        print(
-                            "Encountered Comment which has already been processed.",
-                            "Continuing process.",
-                            "\n", "-" * 20
-                        )
+                        print("Encountered Comment which has already been processed. Continuing process.\n", "-" * 20)
                         continue
 
                     # Generate a response to the comment with the DialogFlow API.
@@ -185,11 +180,8 @@ class DialogFlowAgent:
 
                     # Output status.
                     print(
-                        "Encountered invalid GCP API argument.",
-                        "Comment context length is likely too large.",
-                        "Adding Comment to 'engaged_comments' and continuing process.",
-                        "\n",
-                        "-" * 20
+                        "Encountered invalid GCP API argument. Comment context length is likely too large.",
+                        "Adding Comment to 'engaged_comments' and continuing process.\n", "-" * 20
                     )
 
                     # Archive Comment object to 'engaged_comments'.
@@ -202,10 +194,8 @@ class DialogFlowAgent:
 
                     # Output status.
                     print(
-                        "Encountered Reddit Comment creation limit.",
-                        "Adding Comment to 'engaged_comments' and continuing process.",
-                        "\n",
-                        "-" * 20
+                        "Encountered Reddit Comment creation limit. Adding Comment to 'engaged_comments' and "
+                        "continuing process.\n", "-" * 20
                     )
 
                     # Archive Comment object to 'engaged_comments'.
@@ -230,13 +220,7 @@ class DialogFlowAgent:
 
             # Output status.
             print(
-                "Finished loop: ",
-                mainloop_iterations,
-                "\n",
-                "Beginning process stall for 5 minutes.",
-                "\n",
-                "=" * 20,
-                "\n\n"
+                "Finished loop: ", mainloop_iterations, "\nBeginning process stall for 5 minutes.\n", "=" * 20, "\n\n"
             )
 
             # Increment mainloop iterations record.
