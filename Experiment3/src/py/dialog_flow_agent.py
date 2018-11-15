@@ -3,9 +3,11 @@ Created by Alexander Swanson on 6/25/18.
 Copyright (c) 2018, Alexander Joseph Swanson Villares
 alexjosephswanson@gmail.com
 
-The script for the Reddit AI agent that implements DialogFlow.
+The script for the Reddit Agent that implements DialogFlow.
 """
 
+
+""" Imports """
 # This imported in order to authenticate GCP functionality.
 # from Experiment3.src.auth.__j_g_c__ import gcp_authentication
 
@@ -18,8 +20,11 @@ import google
 
 
 class DialogFlowAgent:
+    """
+    An Agent for the use of DialogFlow to create conversations on Reddit comment sections about a given problem-topic.
+    """
 
-    ## Constructor.
+    """ Constructor """
     def __init__(
             self,
             reddit_parameters: tuple,
@@ -29,12 +34,19 @@ class DialogFlowAgent:
             gcp_language_code: str = "en",
     ):
         """
+        Initializes a new DialogFlowAgent to conduct operations on the provided Submission.
 
-        :param reddit_parameters:
-        :param submission_id:
-        :param gcp_project_id: Must be static! The Project ID, respective to the project on the GCP.
-        :param gcp_session_id: Can be modified. This field provides a description for the current session.
-        :param gcp_language_code:
+        :param reddit_parameters: The values necessary to create access to the Reddit API and Reddit data. The 5-tuple
+        structure must always be provided in the order:
+            1. client_id
+            2. client_secret
+            3. user_agent
+            4. username
+            5. password
+        :param submission_id: The ID of the Submission for which to conduct operations.
+        :param gcp_project_id: The Project ID, respective to the project on the Google Cloud Platform.
+        :param gcp_session_id: Provides a description for the current session.
+        :param gcp_language_code: The code indicating which language the DialogFlow agent is expected to interpret.
         """
 
         # Define the Reddit instance with the specified parameters.
@@ -46,32 +58,21 @@ class DialogFlowAgent:
             password=reddit_parameters[4]
         )
 
-
         # Define the Subreddit for work.
         self.submission = self.reddit_instance.submission(id=submission_id)
 
-
         # Define Google Cloud Platform (GCP) Parameters.
         self.gcp_project_id = gcp_project_id
-
-        # Session ID.
         self.gcp_session_id = gcp_session_id
-
-        # Language code.
         self.gcp_language_code = gcp_language_code
-
-        # Session client.
         self.gcp_session_client = dialogflow.SessionsClient()
-
-        # GCP Session.
         self.gcp_session = self.gcp_session_client.session_path(self.gcp_project_id, self.gcp_session_id)
 
 
+    """ Methods """
     def define_gcp_parameters(self):
         """
         Redefines the GCP parameters (necessary due to an error caused by the GCP remote).
-
-        :return:
         """
 
         # # Define Google Cloud Platform (GCP) Parameters.
@@ -84,17 +85,16 @@ class DialogFlowAgent:
         # self.gcp_language_code = self.gcp_language_code
 
 
-        # Session client.
+        # Define the Sessions Client.
         self.gcp_session_client = dialogflow.SessionsClient()
 
-        # GCP Session.
+        # Define the GCP Session.
         self.gcp_session = self.gcp_session_client.session_path(self.gcp_project_id, self.gcp_session_id)
 
 
     def print_subm_comments(self):
         """
-
-        :return:
+        Prints the content of the Comments of the working Submission.
         """
 
         # Define list of all Comment objects from the specified Submission.
@@ -106,22 +106,21 @@ class DialogFlowAgent:
 
             print(comment.body, "\n", '=' * 30, "\n")
 
-        return self
 
-
-    def run(self, process_time_limit: int = 0, verbose: bool = False, engage=False):
+    def run(self, process_time_limit: int = 0, engage=False):
         """
+        The main process. The program monitors the working Submission, first generating a response (Comment) to any of
+        the existing Submission's Comments that merit a response
 
         :param process_time_limit: The limit time for the mainloop (in seconds).
-        :param verbose:
-        :param engage:
+        :param engage: Boolean controller for whether or not to submit generated replies to Comments.
         :return:
         """
 
-        # Define list of all Comments that have been engaged-on.
+        # Define the list of all Comments that have been engaged.
         engaged_comments = []
 
-        # Define list of all responses generated for Comments.
+        # Define the list of the responses that have been generated.
         comment_responses = []
 
         # Define the process time limit.
@@ -131,7 +130,7 @@ class DialogFlowAgent:
         mainloop_iterations = 0
 
         # Run the process until 'process_time_limit' is exceeded.
-        while True:
+        while time.time() <= time_limit:
 
             # Process a short sleep to avoid CPU hog.
             time.sleep(1)
@@ -143,24 +142,23 @@ class DialogFlowAgent:
             # Consider every Comment for a response.
             for comment in submission_comments:
 
-                # Define container for the Comment context (body).
-                comment_body = comment.body
-
+                # Define reference to the Comment context (body).
+                comment_content = comment.body
 
                 try:
 
-                    # Ignore Comment is the context length is less than 3 (three words).
-                    if len(comment_body.split()) < 5:
+                    # TODO: Determine an appropriate value.
+                    # Ignore Comment is the context length is less than 5 (three words).
+                    if len(comment_content.split()) < 5:
 
                         print(
-                            "Encountered Comment of insufficient context length.",
-                            "Adding Comment to 'engaged_comments' and continuing process.",
-                            "\n", "-" * 20, "\n\n"
+                            "Encountered Comment of insufficient context length. Adding Comment to 'engaged_comments' "
+                            "and continuing process.",
+                            "\n", "-" * 20
                         )
 
-                        # Archive Comment object to 'engaged_comments'.
+                        # Add Comment object to 'engaged_comments'.
                         engaged_comments.append(comment)
-
                         continue
 
                     # Ignore Comment if it has already been processed.
@@ -169,68 +167,18 @@ class DialogFlowAgent:
                         print(
                             "Encountered Comment which has already been processed.",
                             "Continuing process.",
-                            "\n", "-" * 20, "\n\n"
+                            "\n", "-" * 20
                         )
-
                         continue
 
                     # Generate a response to the comment with the DialogFlow API.
                     else:
 
-                        # Output status.
-                        if verbose: print(comment_body)
+                        # Respond to the Comment.
+                        self.respond(comment, comment_content, comment_responses, engage, engaged_comments)
 
-                        # Generate response to the comment.
-                        comment_response = self.generate_dialogflow_response(comment_body)
-
-                        # Create a response for the comment if the generated response has not already been used.
-                        if comment_response not in comment_responses:
-
-                            # Create a response to the Comment with a body generated by the DialogFlow API.
-                            if engage:
-                                comment.reply(comment_response)
-
-                            # Archive comment to 'engaged_comments'.
-                            engaged_comments.append(comment)
-
-                            # Archive generated response to 'comment_responses'.
-                            comment_responses.append(comment_response)
-
-
-                            # Stall process continuation in order to account for Reddit Comment creation rules and to
-                            # ensure desirable perception of the Agent on Reddit.
-                            print(
-                                "Created response to Comment: \n",
-                                "\t\t",
-                                comment_body,
-                                "\n\n",
-                                "Beginning process stall for 5 minutes.",
-                                "\n",
-                                "-" * 20,
-                                "\n\n"
-                            )
-                            time.sleep(600)
-
-                            # Redefine the GCP parameters.
-                            self.define_gcp_parameters()
-
-                        # Currently ignoring COMMENT if a RESPONSE is received that has already been used. #
-                        else:
-
-                            # Output status: account for prevention of repeated response.
-                            print(
-                                "Received repeated Comment response. Continuing without action. \n",
-                                "Beginning process stall for 5 minutes.", "\n", "-" * 20, "\n\n"
-                            )
-
-                            # Archive comment to 'engaged_comments'.
-                            engaged_comments.append(comment)
-
-                            # Stall process.
-                            time.sleep(600)
-
-                            # Redefine the GCP parameters.
-                            self.define_gcp_parameters()
+                        # Stall process.
+                        time.sleep(600)
 
                 # Catch exception for invalid input to the GCP API.
                 except google.api_core.exceptions.InvalidArgument:
@@ -241,15 +189,11 @@ class DialogFlowAgent:
                         "Comment context length is likely too large.",
                         "Adding Comment to 'engaged_comments' and continuing process.",
                         "\n",
-                        "-" * 20,
-                        "\n\n"
+                        "-" * 20
                     )
 
                     # Archive Comment object to 'engaged_comments'.
                     engaged_comments.append(comment)
-
-                    # Redefine the GCP parameters.
-                    self.define_gcp_parameters()
 
                     continue
 
@@ -261,15 +205,11 @@ class DialogFlowAgent:
                         "Encountered Reddit Comment creation limit.",
                         "Adding Comment to 'engaged_comments' and continuing process.",
                         "\n",
-                        "-" * 20,
-                        "\n\n"
+                        "-" * 20
                     )
 
                     # Archive Comment object to 'engaged_comments'.
                     engaged_comments.append(comment)
-
-                    # Redefine the GCP parameters.
-                    self.define_gcp_parameters()
 
                     continue
 
@@ -288,51 +228,93 @@ class DialogFlowAgent:
                     # Redefine the GCP parameters.
                     self.define_gcp_parameters()
 
-            # After end of loop, check if the time since the beginning of the process surpasses the given limit.
-            if time.time() > time_limit:
+            # Output status.
+            print(
+                "Finished loop: ",
+                mainloop_iterations,
+                "\n",
+                "Beginning process stall for 5 minutes.",
+                "\n",
+                "=" * 20,
+                "\n\n"
+            )
 
-                # Output status.
-                print("\n", "Reached time-limit; completed process.")
+            # Increment mainloop iterations record.
+            mainloop_iterations += 1
 
-                # End the process.
-                break
+            # Stall process.
+            time.sleep(600)
 
-            # Continue the process; stall for 5 minutes then fetch for new comments.
-            else:
-
-                # Output status.
-                print(
-                    "Finished loop: ",
-                    mainloop_iterations,
-                    "\n",
-                    "Beginning process stall for 5 minutes.",
-                    "\n",
-                    "=" * 30,
-                    "\n\n"
-                )
-
-                # Increment mainloop iterations record.
-                mainloop_iterations += 1
-
-                # Redefine the GCP parameters.
-                self.define_gcp_parameters()
-
-                # Stall process.
-                time.sleep(600)
+        # Output status.
+        print("\n", "Reached time-limit; completed process.")
 
 
-        return self
+    def respond(
+            self, comment, comment_content: str, comment_responses: list, engage: bool, engaged_comments: list
+    ):
+        """
+        Generates a response to a Comment if the generated response has not already been used and submits it to Reddit
+        if desired.
 
-
-    def generate_dialogflow_response(self, text_body):
+        :param comment: The working Submission's Comment.
+        :param comment_content: The body of the Comment.
+        :param comment_responses: The collection of responses that have previously been used.
+        :param engage: The boolean indicating whether or not to submit the generated response.
+        :param engaged_comments: The collection of Comments of the working Submission that have previously been engaged.
         """
 
-        :return:
+        # Generate response to the comment.
+        comment_response = self.generate_dialogflow_response(comment_content)
+
+        # Create a response for the comment if the generated response has not already been used.
+        if comment_response not in comment_responses:
+
+            # Create a response to the Comment with a body generated by the DialogFlow API.
+            if engage:
+                comment.reply(comment_response)
+
+            # Archive comment to 'engaged_comments'.
+            engaged_comments.append(comment)
+
+            # Archive generated response to 'comment_responses'.
+            comment_responses.append(comment_response)
+
+            # Stall process continuation in order to account for Reddit Comment creation rules and to
+            # ensure desirable perception of the Agent on Reddit.
+            print(
+                "Responded to Comment: \n",
+                comment_content, "\n",
+                "With: \n",
+                comment_response, "\n"
+                "\n",
+                "Beginning process stall for 5 minutes.",
+                "\n",
+                "-" * 20,
+            )
+
+        # Currently ignoring COMMENT if a RESPONSE is received that has already been used.
+        else:
+
+            # Output status: account for prevention of repeated response.
+            print(
+                "Received repeated Comment response. Continuing without action. \n",
+                "Beginning process stall for 5 minutes.", "\n", "-" * 20
+            )
+
+            # Archive comment to 'engaged_comments'.
+            engaged_comments.append(comment)
+
+
+    def generate_dialogflow_response(self, text):
+        """
+        Generates an appropriate response to a provided body of text using DialogFlow.
+
+        :return: The generated response.
         """
 
         # Define the text input container for DialogFlow.
         text_input = dialogflow.types.TextInput(
-            text=text_body,
+            text=text,
             language_code=self.gcp_language_code
         )
 
