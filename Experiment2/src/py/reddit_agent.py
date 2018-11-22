@@ -77,7 +77,7 @@ class RedditAgent:
     # The average size of Submission Titles for the current working Submission collection.
     avg_subm_title_size = 0
 
-    # The minimum keyword intersection magnitude.
+    # The minimum keyword intersection magnitude for two collections of keywords.
     keyword_intersection_min = 0
 
     # The divider for determination of minimum keyword intersection magnitude.
@@ -174,7 +174,7 @@ class RedditAgent:
 
         # Define the FP for the problem topic keywords.
         ptopic_keywords_fp = \
-            "../resources/problem_topics/" + self.problem_topic_id + "/problem_topic_kprs/problem_topic_kprs.json"
+            "../resources/problem_topics/" + self.problem_topic_id + "/problem_topic_kwds/problem_topic_kwds.json"
 
         # Load the keywords for the problem topic.
         with open(ptopic_keywords_fp, 'r') as file:

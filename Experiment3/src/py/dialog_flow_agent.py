@@ -8,9 +8,6 @@ The script for the Reddit Agent that implements DialogFlow.
 
 
 """ Imports """
-# This imported in order to authenticate GCP functionality.
-# from Experiment3.src.auth.__j_g_c__ import gcp_authentication
-
 from google.api_core.exceptions import InvalidArgument
 from praw.exceptions import APIException
 import dialogflow
@@ -110,7 +107,7 @@ class DialogFlowAgent:
     def run(self, process_time_limit: int = 0, engage=False):
         """
         The main process. The program monitors the working Submission, first generating a response (Comment) to any of
-        the existing Submission's Comments that merit a response
+        the existing Submission's Comments that merit a response.
 
         :param process_time_limit: The limit time for the mainloop (in seconds).
         :param engage: Boolean controller for whether or not to submit generated replies to Comments.
