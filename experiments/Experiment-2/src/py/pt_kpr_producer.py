@@ -87,7 +87,7 @@ def main():
                      "/index.html",
         save_data=True,
         normalize_data=True,
-        save_fp="/Users/admin/Documents/Python Personal Workspace/RedditAI/Experiment2/src/resources/problem_topics/__j_g_c__/problem_topic_kprs/collections/1/topic_key_phrases.json"
+        save_fp="/Users/admin/Documents/Python Personal Workspace/RedditAI/Experiment-2/src/resources/problem_topics/__j_g_c__/problem_topic_kprs/collections/1/topic_key_phrases.json"
     )
 
 

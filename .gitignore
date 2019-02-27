@@ -107,4 +107,5 @@ venv.bak/
 
 # Custom
 .idea/
-Experiment3/src/auth
+experiments/Experiment-3/src/auth
+/project/
