@@ -1,1 +1,0 @@
-The source files for the project website.
