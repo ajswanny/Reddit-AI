@@ -1,2 +1,0 @@
-- Naming convention for dataframe archives:
-    - <date><time>.json
