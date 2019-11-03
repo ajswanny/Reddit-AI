@@ -10,7 +10,8 @@ import pandas
 from itertools import chain
 from pprint import pprint
 
-indicoio.config.api_key = '43c624474f147b8b777a144807e7ca95'
+with open('../resources/keys/indicoio.txt') as f:
+    indicoio.config.api_key = f.readline()
 
 
 def generate_kprs(

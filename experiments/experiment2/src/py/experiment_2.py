@@ -6,7 +6,7 @@ alexjosephswanson@gmail.com
 
 
 import pandas
-from Experiment2.src.py.reddit_agent import RedditAgent
+from .reddit_agent import RedditAgent
 
 
 def process__pr_h_c__():

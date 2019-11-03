@@ -109,3 +109,5 @@ venv.bak/
 .idea/
 experiments/Experiment-3/src/auth
 /project/
+.DS_Store
+experiments/experiment2/src/resources/keys/indicoio.txt

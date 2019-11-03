@@ -6,9 +6,9 @@ alexjosephswanson@gmail.com
 
 
 # Import 'gcp_authentication' -- necessary for use of the GCP API.
-from Experiment3.src.auth.__j_g_c__ import gcp_authentication
+from auth import gcp_authentication
 
-from Experiment3.src.py.dialog_flow_agent import DialogFlowAgent
+from .dialog_flow_agent import DialogFlowAgent
 
 
 def process__j_g_c__(submission_id: str):

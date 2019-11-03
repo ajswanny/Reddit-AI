@@ -5,7 +5,7 @@ alexjosephswanson@gmail.com
 """
 
 
-from Experiment3.src.py.dialog_flow_agent import DialogFlowAgent
+from .dialog_flow_agent import DialogFlowAgent
 import time
 
 

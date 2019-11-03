@@ -5,7 +5,7 @@ alexjosephswanson@gmail.com
 """
 
 
-from Experiment2.src.py.reddit_agent import RedditAgent
+from .reddit_agent import RedditAgent
 
 from pprint import pprint
 import pandas
