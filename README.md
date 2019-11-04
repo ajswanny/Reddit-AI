@@ -17,3 +17,7 @@ In this experiment, subreddit posts were scanned by our programs and post titles
 Taking things a step forward, a more powerful conversational agent was created using Google's [DialogFlow](https://dialogflow.com). In an attempt to reach out to individual commentors (instead of simply hoping that Reddit users would respond to the comments created in each post by the programs of *Experiment 2*), the agent would scan Subreddit posts and their comments, responding to individual comments that it determined had potential of conversation.
 
 For more information, see the project [paper](paper.pdf).
+
+#### Project terms
+- Problem Topic (PTOPIC): A reference to the topic of the problem being addressed. By default, the humanitarian crisis in Puerto Rico.
+- Expression Utterance: The text content of comments the programs create.
